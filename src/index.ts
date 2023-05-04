@@ -189,7 +189,7 @@ if (input.test) {
 
     for (let index = 0; index < stepResults.length; index++) {
       const {step, execution} = stepResults[index];
-      const name = step.delay ? `Delay: ${step.delay.duration}ms` : step.execute?.name;
+      const name = step.delay ? `🕑 ${step.delay.duration}ms` : step.execute?.name;
       const {status} = execution.executionResult;
       if (status === ExecutionStatus.queued || !status) {
         continue;
