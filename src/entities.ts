@@ -1,3 +1,6 @@
+import {setTimeout as timeout} from 'node:timers/promises';
+import kleur from 'kleur';
+import {WebSocket} from 'ws';
 import {
   ExecutionResult,
   ExecutionStatus,
@@ -9,10 +12,7 @@ import {
   TestSuiteExecutionDetails,
 } from './types';
 import {Connection} from './connection';
-import {WebSocket} from 'ws';
 import * as write from './write';
-import kleur from 'kleur';
-import {setTimeout as timeout} from 'timers/promises';
 
 export interface Entity {
   get(): Promise<TestDetails | TestSuiteDetails>;
