@@ -18,7 +18,7 @@
 <p align="center">
   <img title="MIT license" src="https://img.shields.io/badge/License-MIT-yellow.svg"/>
   <a href="https://github.com/kubeshop/testkube-run-action/releases"><img title="Release" src="https://img.shields.io/github/v/release/kubeshop/testkube-run-action"/></a>
-  <a href="https://github.com/kubeshop/testkube-run-action/releases"><img title="Release date" src="https://img.shields.io/github/release-date/kubeshop/testkube"/></a>
+  <a href="https://github.com/kubeshop/testkube-run-action/releases"><img title="Release date" src="https://img.shields.io/github/release-date/kubeshop/testkube-run-action"/></a>
 </p>
 
 <hr>
