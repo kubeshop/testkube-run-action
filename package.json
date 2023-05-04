@@ -1,0 +1,34 @@
+{
+  "name": "testkube-run-action",
+  "description": "GitHub Action to execute tests and test suites on the Testkube platform.",
+  "version": "1.0.0",
+  "license": "MIT",
+  "author": "Kubeshop",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rimraf dist && npx ncc build src/index.ts --license licenses.txt"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kubeshop/testkube-run-action.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kubeshop/testkube-run-action/issues"
+  },
+  "homepage": "https://github.com/kubeshop/testkube-run-action#readme",
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
+    "dotenv": "^16.0.3",
+    "got": "^12.6.0",
+    "kleur": "^4.1.5",
+    "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.16.3",
+    "@types/ws": "^8.5.4",
+    "@vercel/ncc": "^0.36.1",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.0.4"
+  }
+}

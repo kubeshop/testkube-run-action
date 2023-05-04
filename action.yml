@@ -1,0 +1,48 @@
+name: "Run on Testkube"
+author: "Kubeshop"
+description: "Execute tests and test suites on the Testkube platform."
+runs:
+  using: "node16"
+  main: "dist/index.js"
+inputs:
+  # Test
+  test:
+    description: "Test ID to run."
+    required: true
+  ref:
+    description: "Override Git revision used for the test."
+    required: false
+  variables:
+    description: "Override basic variables used in test - format as env variables list."
+    required: false
+  secretVariables:
+    description: "Override secret variables used in test - format as env variables list."
+    required: false
+  preRunScript:
+    description: "Override pre-run script."
+    required: false
+
+  # Execution
+  executionName:
+    description: "Override default execution name."
+    required: false
+
+  # URLs
+  url:
+    description: "Testkube API, defaults to the Testkube Cloud API."
+    default: "https://api.testkube.io"
+    required: false
+  ws:
+    description: "Override Testkube WS API, if it doesn't work automatically to fetch logs."
+    required: false
+
+  # Auth
+  token:
+    description: "Auth token for the Testkube instance."
+    required: false
+  organization:
+    description: "Organization ID in the Testkube Cloud."
+    required: false
+  environment:
+    description: "Environment ID in the Testkube Cloud."
+    required: false
