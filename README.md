@@ -23,6 +23,6 @@
 
 <hr>
 
-# Execute tests in Testkube on GitHub Actions
+# Run tests with GitHub Actions
 
 TODO
