@@ -1,6 +1,6 @@
 <p align="center">  
-  <img style="max-width:66%" src="assets/testkube-color-white.png#gh-dark-mode-only" alt="Testkube Logo Light"/>
-  <img style="max-width:66%" src="assets/testkube-color-dark.png#gh-light-mode-only" alt="Testkube Logo Dark" />
+  <img src="assets/testkube-color-white.svg#gh-dark-mode-only" alt="Testkube Logo Light" />
+  <img src="assets/testkube-color-dark.svg#gh-light-mode-only" alt="Testkube Logo Dark" />
 </p>
 
 <p align="center">
