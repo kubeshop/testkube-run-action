@@ -97,7 +97,7 @@ export interface TestExecutionData {
   };
 }
 
-interface ExecutionResult {
+export interface ExecutionResult {
   status: ExecutionStatus;
   errorMessage?: string;
 }

@@ -11417,7 +11417,7 @@ const runningContext = { type: 'testtrigger', context: 'GitHub Action' };
 
 /***/ }),
 
-/***/ 6995:
+/***/ 1134:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -17283,32 +17283,8 @@ var websocket_server = __nccwpck_require__(8887);
 
 // EXTERNAL MODULE: ./src/write.ts
 var write = __nccwpck_require__(1262);
-;// CONCATENATED MODULE: ./src/utils.ts
-
-function maybeParse(str, defaultValue) {
-    try {
-        return JSON.parse(str);
-    }
-    catch (e) {
-        return undefined;
-    }
-}
-function sanitizeUrl(url, protocol) {
-    url = url.replace(/\/+$/, '');
-    const [, currentProtocol] = url.match(/^([^:]+):\/\//) || [];
-    if (!currentProtocol) {
-        url = `${protocol}://${url}`;
-    }
-    else if (currentProtocol !== protocol && currentProtocol !== `${protocol}s`) {
-        // TODO: Edge case, but ws:// may become https://
-        url = `${protocol}${currentProtocol.endsWith('s') ? 's' : ''}://${url.substring(currentProtocol.length + 3)}`;
-    }
-    return url;
-}
-function handleHttpError(error) {
-    return write/* critical */.kq(maybeParse(error?.response?.body)?.detail || error);
-}
-
+// EXTERNAL MODULE: ./src/utils.ts
+var utils = __nccwpck_require__(1314);
 // EXTERNAL MODULE: ./src/config.ts
 var src_config = __nccwpck_require__(6373);
 ;// CONCATENATED MODULE: ./src/connection.ts
@@ -17321,8 +17297,8 @@ var src_config = __nccwpck_require__(6373);
 
 async function resolveConfig(config) {
     // Sanitize URLs
-    const sanitizedApiUrl = sanitizeUrl(config.url || src_config/* defaultInstance */.Wt, 'http');
-    const sanitizedWsUrl = sanitizeUrl(config.ws || sanitizedApiUrl, 'ws');
+    const sanitizedApiUrl = (0,utils/* sanitizeUrl */.Nm)(config.url || src_config/* defaultInstance */.Wt, 'http');
+    const sanitizedWsUrl = (0,utils/* sanitizeUrl */.Nm)(config.ws || sanitizedApiUrl, 'ws');
     // Auto-resolve known hosts
     const { host } = new external_node_url_namespaceObject.URL(sanitizedApiUrl);
     const detected = src_config/* knownInstances */.Sn[src_config/* instanceAliases */.AD[host] || host];
@@ -17347,7 +17323,7 @@ async function resolveConfig(config) {
                 baseUrl = res.url.replace(/\/info$/, '');
                 // Use same for them WS if it was not hardcoded differently
                 if (same) {
-                    baseWsUrl = sanitizeUrl(baseUrl, 'ws');
+                    baseWsUrl = (0,utils/* sanitizeUrl */.Nm)(baseUrl, 'ws');
                 }
                 foundSuffix = true;
                 break;
@@ -17384,14 +17360,14 @@ class Connection {
     get(path, allowFailure) {
         const promise = got_dist_source(`${this.c.url}${path}`, { headers: this.buildHeaders() }).json();
         if (!allowFailure) {
-            return promise.catch(handleHttpError);
+            return promise.catch(utils/* handleHttpError */.rJ);
         }
         return promise;
     }
     post(path, data, allowFailure) {
         const promise = got_dist_source.post(`${this.c.url}${path}`, { headers: this.buildHeaders(), json: data }).json();
         if (!allowFailure) {
-            return promise.catch(handleHttpError);
+            return promise.catch(utils/* handleHttpError */.rJ);
         }
         return promise;
     }
@@ -17424,6 +17400,191 @@ class Connection {
 
 /***/ }),
 
+/***/ 4931:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  "g": () => (/* binding */ TestEntity),
+  "t": () => (/* binding */ TestSuiteEntity)
+});
+
+// EXTERNAL MODULE: ./src/types.ts
+var types = __nccwpck_require__(5077);
+// EXTERNAL MODULE: ./src/write.ts
+var write = __nccwpck_require__(1262);
+// EXTERNAL MODULE: ./node_modules/kleur/index.mjs
+var kleur = __nccwpck_require__(5386);
+;// CONCATENATED MODULE: external "timers/promises"
+const promises_namespaceObject = require("timers/promises");
+;// CONCATENATED MODULE: ./src/entities.ts
+
+
+
+
+class TestEntity {
+    client;
+    id;
+    constructor(client, id) {
+        this.client = client;
+        this.id = id;
+    }
+    get() {
+        return this.client.getTestDetails(this.id);
+    }
+    getExecution(id) {
+        return this.client.getTestExecutionDetails(id);
+    }
+    schedule(data) {
+        return this.client.scheduleTestExecution(this.id, data);
+    }
+    getResult(data) {
+        return data.executionResult;
+    }
+    watchExecution(id) {
+        return new Promise((resolve) => {
+            let conn;
+            let timeoutRef;
+            let done = false;
+            const buildWebSocket = () => {
+                const ws = this.client.openLogsSocket(id);
+                let failed = false;
+                ws.on('error', () => {
+                    // Back-end may return falsely 400, so ignore errors and reconnect
+                    failed = true;
+                    if (!done) {
+                        conn = buildWebSocket();
+                        write/* log */.cM(kleur/* default.italic */.Z.italic('Reconnecting...'));
+                    }
+                    ws.close();
+                });
+                ws.on('close', () => {
+                    if (!failed) {
+                        done = true;
+                        clearTimeout(timeoutRef);
+                        resolve();
+                    }
+                });
+                ws.on('message', (logData) => {
+                    if (!logData) {
+                        return;
+                    }
+                    try {
+                        const dataToJSON = JSON.parse(logData);
+                        const potentialOutput = dataToJSON?.result?.output || dataToJSON?.output;
+                        if (potentialOutput) {
+                            write/* log */.cM(potentialOutput);
+                            if (dataToJSON.status === types/* ExecutionStatus.failed */.F.failed) {
+                                write/* log */.cM(`Test run failed: ${dataToJSON.errorMessage || 'failure'}`);
+                                resolve();
+                                ws.close();
+                                clearTimeout(timeoutRef);
+                            }
+                            else if (dataToJSON.status === types/* ExecutionStatus.passed */.F.passed) {
+                                write/* log */.cM('Test run succeed\n');
+                                resolve();
+                                ws.close();
+                                clearTimeout(timeoutRef);
+                            }
+                            return;
+                        }
+                        if (dataToJSON.content) {
+                            write/* log */.cM(dataToJSON.content);
+                        }
+                        else {
+                            write/* log */.cM(logData);
+                        }
+                    }
+                    catch (err) {
+                        write/* log */.cM(logData);
+                    }
+                });
+                return ws;
+            };
+            conn = buildWebSocket();
+            // Poll results as well, because there are problems with WS
+            const tick = async () => {
+                const { executionResult: { status } } = await this.client.getTestExecutionDetails(id, true)
+                    .catch(() => ({ executionResult: { status: types/* ExecutionStatus.queued */.F.queued } }));
+                if ([types/* ExecutionStatus.passed */.F.passed, types/* ExecutionStatus.failed */.F.failed, types/* ExecutionStatus.cancelled */.F.cancelled].includes(status)) {
+                    done = true;
+                    resolve();
+                    conn.close();
+                    return;
+                }
+                timeoutRef = setTimeout(tick, 2000);
+            };
+            timeoutRef = setTimeout(tick, 2000);
+        });
+    }
+}
+class TestSuiteEntity {
+    client;
+    id;
+    constructor(client, id) {
+        this.client = client;
+        this.id = id;
+    }
+    get() {
+        return this.client.getTestSuiteDetails(this.id);
+    }
+    getExecution(id) {
+        return this.client.getTestSuiteExecutionDetails(id);
+    }
+    schedule(data) {
+        return this.client.scheduleTestSuiteExecution(this.id, data);
+    }
+    getResult(data) {
+        const errorMessage = data.stepResults
+            .map(x => x.execution.executionResult)
+            .filter((x) => x.status === types/* ExecutionStatus.failed */.F.failed && x.errorMessage)
+            .map((x) => x.errorMessage)
+            .join(', ');
+        return {
+            status: data.status,
+            errorMessage: errorMessage,
+        };
+    }
+    async watchExecution(id) {
+        const movements = {
+            [types/* ExecutionStatus.running */.F.running]: [],
+            [types/* ExecutionStatus.cancelled */.F.cancelled]: [],
+            [types/* ExecutionStatus.passed */.F.passed]: [],
+            [types/* ExecutionStatus.failed */.F.failed]: [],
+        };
+        while (true) {
+            await (0,promises_namespaceObject.setTimeout)(1000);
+            const { status, stepResults } = await this.client.getTestSuiteExecutionDetails(id);
+            const statusColors = {
+                [types/* ExecutionStatus.passed */.F.passed]: kleur/* default.green */.Z.green,
+                [types/* ExecutionStatus.failed */.F.failed]: kleur/* default.red */.Z.red,
+                [types/* ExecutionStatus.running */.F.running]: kleur/* default.gray */.Z.gray,
+                [types/* ExecutionStatus.cancelled */.F.cancelled]: kleur/* default.red */.Z.red,
+            };
+            for (let index = 0; index < stepResults.length; index++) {
+                const { step, execution } = stepResults[index];
+                const name = step.delay ? `🕑 ${step.delay.duration}ms` : step.execute?.name;
+                const { status } = execution.executionResult;
+                if (status === types/* ExecutionStatus.queued */.F.queued || !status) {
+                    continue;
+                }
+                if (!movements[status].includes(index)) {
+                    movements[status].push(index);
+                    process.stdout.write(statusColors[status](`[${status}] ${name}\n`));
+                }
+            }
+            if ([types/* ExecutionStatus.passed */.F.passed, types/* ExecutionStatus.failed */.F.failed, types/* ExecutionStatus.cancelled */.F.cancelled].includes(status)) {
+                break;
+            }
+        }
+    }
+}
+
+
+/***/ }),
+
 /***/ 6144:
 /***/ ((module, __webpack_exports__, __nccwpck_require__) => {
 
@@ -17438,9 +17599,13 @@ __nccwpck_require__.r(__webpack_exports__);
 /* harmony import */ var dotenv__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__nccwpck_require__.n(dotenv__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var kleur__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(5386);
 /* harmony import */ var _write__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(1262);
-/* harmony import */ var _connection__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(6995);
+/* harmony import */ var _connection__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(1134);
 /* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(5077);
 /* harmony import */ var _config__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(6373);
+/* harmony import */ var _entities__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(4931);
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_9__ = __nccwpck_require__(1314);
+
+
 
 
 
@@ -17477,164 +17642,32 @@ if (input.testSuite && input.preRunScript) {
 }
 // Constants
 const client = new _connection__WEBPACK_IMPORTED_MODULE_5__/* .Connection */ .e(await (0,_connection__WEBPACK_IMPORTED_MODULE_5__/* .resolveConfig */ .n)(input));
+const entity = input.test ? new _entities__WEBPACK_IMPORTED_MODULE_8__/* .TestEntity */ .g(client, input.test) : new _entities__WEBPACK_IMPORTED_MODULE_8__/* .TestSuiteEntity */ .t(client, input.testSuite);
 // Get test details
 _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Obtaining details');
-const details = input.test
-    ? await client.getTestDetails(input.test)
-    : await client.getTestSuiteDetails(input.testSuite);
+const details = await entity.get();
 if (!['git', 'git-dir', 'git-file'].includes(details.content?.type) && input.ref) {
     _write__WEBPACK_IMPORTED_MODULE_4__/* .critical */ .kq('Git revision provided, but the test is not sourced from Git.');
 }
-// Build variables
-const variables = {};
-for (const [name, value] of Object.entries(input.variables || {})) {
-    variables[name] = { name, type: 'basic', value };
-}
-for (const [name, value] of Object.entries(input.secretVariables || {})) {
-    variables[name] = { name, type: 'secret', value };
-}
 // Run test
 _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Scheduling test execution');
-const executionInput = {
+const variables = (0,_utils__WEBPACK_IMPORTED_MODULE_9__/* .formatVariables */ .t3)(input.variables, input.secretVariables);
+const execution = await entity.schedule({
     name: input.executionName || undefined,
     preRunScript: input.preRunScript || undefined,
     namespace: input.namespace || undefined,
     variables: Object.keys(variables).length > 0 ? { ...details.executionRequest?.variables, ...variables } : undefined,
     contentRequest: input.ref ? { repository: { commit: input.ref } } : undefined,
     runningContext: _config__WEBPACK_IMPORTED_MODULE_7__/* .runningContext */ .Di,
-};
-const execution = input.test
-    ? await client.scheduleTestExecution(input.test, executionInput)
-    : await client.scheduleTestSuiteExecution(input.testSuite, executionInput);
+});
 _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(`Execution scheduled: ${execution.name} (${execution.id})`);
 // Stream logs
-if (input.test) {
-    _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Attaching to logs');
-    await new Promise((resolve) => {
-        let conn;
-        let timeoutRef;
-        let done = false;
-        const buildWebSocket = () => {
-            const ws = client.openLogsSocket(execution.id);
-            let failed = false;
-            ws.on('error', () => {
-                // Back-end may return falsely 400, so ignore errors and reconnect
-                failed = true;
-                if (!done) {
-                    conn = buildWebSocket();
-                    _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].italic */ .Z.italic('Reconnecting...'));
-                }
-                ws.close();
-            });
-            ws.on('close', () => {
-                if (!failed) {
-                    done = true;
-                    clearTimeout(timeoutRef);
-                    resolve();
-                }
-            });
-            ws.on('message', (logData) => {
-                if (!logData) {
-                    return;
-                }
-                try {
-                    const dataToJSON = JSON.parse(logData);
-                    const potentialOutput = dataToJSON?.result?.output || dataToJSON?.output;
-                    if (potentialOutput) {
-                        _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(potentialOutput);
-                        if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed) {
-                            _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(`Test run failed: ${dataToJSON.errorMessage || 'failure'}`);
-                            resolve();
-                            ws.close();
-                            clearTimeout(timeoutRef);
-                        }
-                        else if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed) {
-                            _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM('Test run succeed\n');
-                            resolve();
-                            ws.close();
-                            clearTimeout(timeoutRef);
-                        }
-                        return;
-                    }
-                    if (dataToJSON.content) {
-                        _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(dataToJSON.content);
-                    }
-                    else {
-                        _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(logData);
-                    }
-                }
-                catch (err) {
-                    _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(logData);
-                }
-            });
-            return ws;
-        };
-        conn = buildWebSocket();
-        // Poll results as well, because there are problems with WS
-        const tick = async () => {
-            const { executionResult: { status } } = await client.getTestExecutionDetails(execution.id, true)
-                .catch(() => ({ executionResult: { status: _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.queued */ .F.queued } }));
-            if ([_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed, _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed, _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.cancelled */ .F.cancelled].includes(status)) {
-                done = true;
-                resolve();
-                conn.close();
-                return;
-            }
-            timeoutRef = setTimeout(tick, 2000);
-        };
-        timeoutRef = setTimeout(tick, 2000);
-    });
-}
-else {
-    _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Watching steps');
-    const movements = {
-        [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.running */ .F.running]: [],
-        [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.cancelled */ .F.cancelled]: [],
-        [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed]: [],
-        [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed]: [],
-    };
-    while (true) {
-        await (0,node_timers_promises__WEBPACK_IMPORTED_MODULE_0__.setTimeout)(1000);
-        const { status, stepResults } = await client.getTestSuiteExecutionDetails(execution.id);
-        const statusColors = {
-            [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed]: kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].green */ .Z.green,
-            [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed]: kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].red */ .Z.red,
-            [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.running */ .F.running]: kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].gray */ .Z.gray,
-            [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.cancelled */ .F.cancelled]: kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].red */ .Z.red,
-        };
-        for (let index = 0; index < stepResults.length; index++) {
-            const { step, execution } = stepResults[index];
-            const name = step.delay ? `🕑 ${step.delay.duration}ms` : step.execute?.name;
-            const { status } = execution.executionResult;
-            if (status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.queued */ .F.queued || !status) {
-                continue;
-            }
-            if (!movements[status].includes(index)) {
-                movements[status].push(index);
-                process.stdout.write(statusColors[status](`[${status}] ${name}\n`));
-            }
-        }
-        if ([_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed, _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed, _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.cancelled */ .F.cancelled].includes(status)) {
-            break;
-        }
-    }
-}
+_write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Attaching to logs');
+await entity.watchExecution(execution.id);
 // Obtain result
 _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Obtaining results');
 await (0,node_timers_promises__WEBPACK_IMPORTED_MODULE_0__.setTimeout)(500); // wait, so CRD will be surely up-to-date
-const result = input.test
-    ? await client.getTestExecutionDetails(execution.id)
-    : await client.getTestSuiteExecutionDetails(execution.id);
-const status = input.test
-    ? result.executionResult?.status
-    : result.status;
-const errorMessage = input.test
-    ? result.executionResult?.errorMessage
-    : result.stepResults
-        .map(x => x.execution.executionResult)
-        .filter((x) => x.status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed && x.errorMessage)
-        .map((x) => x.errorMessage)
-        .join(', ');
+const { status, errorMessage } = entity.getResult(await entity.getExecution(execution.id));
 // Show the result
 if (status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed) {
     process.stdout.write(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].green */ .Z.green().bold(`✔ The run was successful\n`));
@@ -17679,6 +17712,55 @@ var ExecutionStatus;
     ExecutionStatus["running"] = "running";
     ExecutionStatus["queued"] = "queued";
 })(ExecutionStatus || (ExecutionStatus = {}));
+
+
+/***/ }),
+
+/***/ 1314:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "Nm": () => (/* binding */ sanitizeUrl),
+/* harmony export */   "rJ": () => (/* binding */ handleHttpError),
+/* harmony export */   "t3": () => (/* binding */ formatVariables)
+/* harmony export */ });
+/* unused harmony export maybeParse */
+/* harmony import */ var _write__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(1262);
+
+function maybeParse(str, defaultValue) {
+    try {
+        return JSON.parse(str);
+    }
+    catch (e) {
+        return undefined;
+    }
+}
+function sanitizeUrl(url, protocol) {
+    url = url.replace(/\/+$/, '');
+    const [, currentProtocol] = url.match(/^([^:]+):\/\//) || [];
+    if (!currentProtocol) {
+        url = `${protocol}://${url}`;
+    }
+    else if (currentProtocol !== protocol && currentProtocol !== `${protocol}s`) {
+        // TODO: Edge case, but ws:// may become https://
+        url = `${protocol}${currentProtocol.endsWith('s') ? 's' : ''}://${url.substring(currentProtocol.length + 3)}`;
+    }
+    return url;
+}
+function handleHttpError(error) {
+    return _write__WEBPACK_IMPORTED_MODULE_0__/* .critical */ .kq(maybeParse(error?.response?.body)?.detail || error);
+}
+function formatVariables(basicVariables, secretVariables) {
+    const variables = {};
+    for (const [name, value] of Object.entries(basicVariables || {})) {
+        variables[name] = { name, type: 'basic', value };
+    }
+    for (const [name, value] of Object.entries(secretVariables || {})) {
+        variables[name] = { name, type: 'secret', value };
+    }
+    return variables;
+}
 
 
 /***/ }),

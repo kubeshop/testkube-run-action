@@ -1,4 +1,5 @@
 import * as write from './write';
+import {Variable} from './types';
 
 export function maybeParse(str: string, defaultValue?: any): any {
   try {
@@ -25,4 +26,15 @@ export function sanitizeUrl(url: string, protocol: string): string {
 
 export function handleHttpError(error: any): never {
   return write.critical(maybeParse(error?.response?.body)?.detail || error);
+}
+
+export function formatVariables(basicVariables?: Record<string, string>, secretVariables?: Record<string, string>): Record<string, Variable> {
+  const variables: Record<string, Variable> = {};
+  for (const [name, value] of Object.entries(basicVariables || {})) {
+    variables[name] = {name, type: 'basic', value};
+  }
+  for (const [name, value] of Object.entries(secretVariables || {})) {
+    variables[name] = {name, type: 'secret', value};
+  }
+  return variables;
 }
