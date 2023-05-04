@@ -17338,9 +17338,17 @@ async function resolveConfig(config) {
         let lastErr = null;
         for (const suffix of src_config/* knownSuffixes */.Cf) {
             try {
-                await got_dist_source(`${baseUrl}${suffix}/info`).json();
-                baseUrl = `${baseUrl}${suffix}`;
-                baseWsUrl = `${baseWsUrl}${suffix}`;
+                const res = await got_dist_source(`${baseUrl}${suffix}/info`);
+                // Ensure its' a valid response
+                JSON.parse(res.body);
+                // Detect if WS is using same server as REST
+                const same = baseUrl.replace(/^[^:]+/, '') === baseWsUrl.replace(/^[^:]+/, '');
+                // Follow 3xx redirection
+                baseUrl = res.url.replace(/\/info$/, '');
+                // Use same for them WS if it was not hardcoded differently
+                if (same) {
+                    baseWsUrl = sanitizeUrl(baseUrl, 'ws');
+                }
                 foundSuffix = true;
                 break;
             }
@@ -17481,18 +17489,22 @@ _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Attaching to logs');
 await new Promise((resolve) => {
     let conn;
     let timeoutRef;
+    let done = false;
     const buildWebSocket = () => {
         const ws = client.openLogsSocket(execution.id);
         let failed = false;
         ws.on('error', () => {
             // Back-end may return falsely 400, so ignore errors and reconnect
             failed = true;
-            conn = buildWebSocket();
-            _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].italic */ .Z.italic('Reconnecting...'));
+            if (!done) {
+                conn = buildWebSocket();
+                _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].italic */ .Z.italic('Reconnecting...'));
+            }
             ws.close();
         });
         ws.on('close', () => {
             if (!failed) {
+                done = true;
                 clearTimeout(timeoutRef);
                 resolve();
             }
@@ -17539,6 +17551,7 @@ await new Promise((resolve) => {
         const { executionResult: { status } } = await client.getExecutionDetails(execution.id, true)
             .catch(() => ({ executionResult: { status: _types__WEBPACK_IMPORTED_MODULE_6__/* .TestExecutionStatus.queued */ .v.queued } }));
         if ([_types__WEBPACK_IMPORTED_MODULE_6__/* .TestExecutionStatus.passed */ .v.passed, _types__WEBPACK_IMPORTED_MODULE_6__/* .TestExecutionStatus.failed */ .v.failed, _types__WEBPACK_IMPORTED_MODULE_6__/* .TestExecutionStatus.cancelled */ .v.cancelled].includes(status)) {
+            done = true;
             resolve();
             conn.close();
             return;

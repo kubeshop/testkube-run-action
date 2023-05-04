@@ -27,9 +27,22 @@ export async function resolveConfig(config: ActionInput): Promise<ConnectionConf
     let lastErr = null;
     for (const suffix of knownSuffixes) {
       try {
-        await got(`${baseUrl}${suffix}/info`).json();
-        baseUrl = `${baseUrl}${suffix}`;
-        baseWsUrl = `${baseWsUrl}${suffix}`;
+        const res = await got(`${baseUrl}${suffix}/info`);
+
+        // Ensure it's a valid response
+        JSON.parse(res.body);
+
+        // Detect if WS is using same server as REST
+        const same = baseUrl.replace(/^[^:]+/, '') === baseWsUrl.replace(/^[^:]+/, '');
+
+        // Follow 3xx redirection
+        baseUrl = res.url.replace(/\/info$/, '');
+
+        // Use same for them WS if it was not hardcoded differently
+        if (same) {
+          baseWsUrl = sanitizeUrl(baseUrl, 'ws');
+        }
+
         foundSuffix = true;
         break;
       } catch (error) {

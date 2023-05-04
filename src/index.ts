@@ -74,6 +74,7 @@ write.header('Attaching to logs');
 await new Promise<void>((resolve) => {
   let conn: WebSocket;
   let timeoutRef: NodeJS.Timeout;
+  let done = false;
 
   const buildWebSocket = () => {
     const ws = client.openLogsSocket(execution.id);
@@ -82,13 +83,16 @@ await new Promise<void>((resolve) => {
     ws.on('error', () => {
       // Back-end may return falsely 400, so ignore errors and reconnect
       failed = true;
-      conn = buildWebSocket();
-      write.log(kleur.italic('Reconnecting...'));
+      if (!done) {
+        conn = buildWebSocket();
+        write.log(kleur.italic('Reconnecting...'));
+      }
       ws.close();
     });
 
     ws.on('close', () => {
       if (!failed) {
+        done = true;
         clearTimeout(timeoutRef);
         resolve();
       }
@@ -137,6 +141,7 @@ await new Promise<void>((resolve) => {
     const {executionResult: {status}} = await client.getExecutionDetails(execution.id, true)
       .catch(() => ({executionResult: {status:TestExecutionStatus.queued}}));
     if ([TestExecutionStatus.passed, TestExecutionStatus.failed, TestExecutionStatus.cancelled].includes(status)) {
+      done = true;
       resolve();
       conn.close();
       return;
