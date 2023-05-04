@@ -5,7 +5,14 @@ import {WebSocket} from 'ws';
 import * as write from './write';
 import {sanitizeUrl, handleHttpError} from './utils';
 import {defaultInstance, instanceAliases, knownInstances, knownSuffixes} from './config';
-import {ActionInput, ConnectionConfig, TestDetails, TestExecutionData, TestExecutionDetails} from './types';
+import {
+  ActionInput,
+  ConnectionConfig,
+  TestDetails,
+  TestExecutionData,
+  TestExecutionDetails,
+  TestSuiteDetails, TestSuiteExecutionData, TestSuiteExecutionDetails
+} from './types';
 
 export async function resolveConfig(config: ActionInput): Promise<ConnectionConfig> {
   // Sanitize URLs
@@ -106,12 +113,24 @@ export class Connection {
     return this.get<TestDetails>(`/tests/${testId}`, allowFailure);
   }
 
+  getTestSuiteDetails(testSuiteId: string, allowFailure?: boolean): Promise<TestSuiteDetails> {
+    return this.get<TestSuiteDetails>(`/test-suites/${testSuiteId}`, allowFailure);
+  }
+
   scheduleTestExecution(testId: string, data: TestExecutionData, allowFailure?: boolean): Promise<TestExecutionDetails> {
     return this.post<TestExecutionDetails, TestExecutionData>(`/tests/${testId}/executions`, data, allowFailure);
   }
 
-  getExecutionDetails(executionId: string, allowFailure?: boolean): Promise<TestExecutionDetails> {
+  scheduleTestSuiteExecution(testSuiteId: string, data: TestSuiteExecutionData, allowFailure?: boolean): Promise<TestSuiteExecutionDetails> {
+    return this.post<TestSuiteExecutionDetails, TestSuiteExecutionData>(`/test-suites/${testSuiteId}/executions`, data, allowFailure);
+  }
+
+  getTestExecutionDetails(executionId: string, allowFailure?: boolean): Promise<TestExecutionDetails> {
     return this.get<TestExecutionDetails>(`/executions/${executionId}`, allowFailure);
+  }
+
+  getTestSuiteExecutionDetails(executionId: string, allowFailure?: boolean): Promise<TestSuiteExecutionDetails> {
+    return this.get<TestSuiteExecutionDetails>(`/test-suite-executions/${executionId}`, allowFailure);
   }
 
   openLogsSocket(executionId: string): WebSocket {

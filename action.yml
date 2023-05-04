@@ -5,10 +5,14 @@ runs:
   using: "node16"
   main: "dist/index.js"
 inputs:
-  # Test
+  # Test or test suite
   test:
     description: "Test ID to run."
-    required: true
+    required: false
+  testSuite:
+    description: "Test Suite ID to run."
+    required: false
+
   ref:
     description: "Override Git revision used for the test."
     required: false

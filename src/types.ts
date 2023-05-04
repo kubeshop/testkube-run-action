@@ -1,5 +1,7 @@
 export interface ActionInput {
-  test: string;
+  test?: string;
+  testSuite?: string;
+
   ref?: string;
   variables?: Record<string, string>;
   secretVariables?: Record<string, string>;
@@ -22,7 +24,7 @@ export interface ConnectionConfig {
   cloud: boolean;
 }
 
-export enum TestExecutionStatus {
+export enum ExecutionStatus {
   passed = 'passed',
   failed = 'failed',
   cancelled = 'cancelled',
@@ -51,6 +53,25 @@ export interface TestDetails {
   };
 }
 
+export interface TestSuiteDetails {
+  content?: undefined;
+  executionRequest?: {
+    negativeTest?: undefined;
+    variables?: Record<string, Variable>;
+  };
+  steps: {
+    stopTestOnFailure: boolean;
+    execute: {
+      name: string;
+    };
+  }[];
+}
+
+interface RunningContext {
+  type: string;
+  context: string;
+}
+
 export interface TestExecutionData {
   name?: string;
   command?: string[];
@@ -62,10 +83,7 @@ export interface TestExecutionData {
   jobTemplate?: string;
   preRunScript?: string;
   variables?: Record<string, Variable>;
-  runningContext?: {
-    type: string;
-    context: string;
-  };
+  runningContext?: RunningContext;
   executionLabels?: Record<string, string>;
   contentRequest?: {
     repository?: {
@@ -77,11 +95,44 @@ export interface TestExecutionData {
   };
 }
 
+interface ExecutionResult {
+  status: ExecutionStatus;
+  errorMessage?: string;
+}
+
 export interface TestExecutionDetails {
   id: string;
   name: string;
-  executionResult: {
-    status: TestExecutionStatus;
-    errorMessage?: string;
-  };
+  executionResult: ExecutionResult;
+}
+
+export interface TestSuiteExecutionData {
+  name?: string;
+  httpProxy?: boolean;
+  httpsProxy?: boolean;
+  variables?: Record<string, Variable>;
+  runningContext?: RunningContext;
+  executionLabels?: Record<string, string>;
+}
+
+export interface TestSuiteExecutionDetails {
+  id: string;
+  name: string;
+  status: ExecutionStatus;
+  stepResults: {
+    step: {
+      stopTestOnFailure: boolean;
+      delay?: {
+        duration: number;
+      };
+      execute?: {
+        name: string;
+      };
+    };
+    execution: {
+      startTime: string;
+      endTime: string;
+      executionResult: ExecutionResult;
+    };
+  }[];
 }

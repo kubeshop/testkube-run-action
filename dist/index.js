@@ -17339,7 +17339,7 @@ async function resolveConfig(config) {
         for (const suffix of src_config/* knownSuffixes */.Cf) {
             try {
                 const res = await got_dist_source(`${baseUrl}${suffix}/info`);
-                // Ensure its' a valid response
+                // Ensure it's a valid response
                 JSON.parse(res.body);
                 // Detect if WS is using same server as REST
                 const same = baseUrl.replace(/^[^:]+/, '') === baseWsUrl.replace(/^[^:]+/, '');
@@ -17401,11 +17401,20 @@ class Connection {
     getTestDetails(testId, allowFailure) {
         return this.get(`/tests/${testId}`, allowFailure);
     }
+    getTestSuiteDetails(testSuiteId, allowFailure) {
+        return this.get(`/test-suites/${testSuiteId}`, allowFailure);
+    }
     scheduleTestExecution(testId, data, allowFailure) {
         return this.post(`/tests/${testId}/executions`, data, allowFailure);
     }
-    getExecutionDetails(executionId, allowFailure) {
+    scheduleTestSuiteExecution(testSuiteId, data, allowFailure) {
+        return this.post(`/test-suites/${testSuiteId}/executions`, data, allowFailure);
+    }
+    getTestExecutionDetails(executionId, allowFailure) {
         return this.get(`/executions/${executionId}`, allowFailure);
+    }
+    getTestSuiteExecutionDetails(executionId, allowFailure) {
+        return this.get(`/test-suite-executions/${executionId}`, allowFailure);
     }
     openLogsSocket(executionId) {
         return this.ws(`/executions/${executionId}/logs/stream`);
@@ -17443,6 +17452,7 @@ __nccwpck_require__.r(__webpack_exports__);
 // Configure
 const input = {
     test: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('test'),
+    testSuite: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('testSuite'),
     ref: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('ref'),
     variables: (0,dotenv__WEBPACK_IMPORTED_MODULE_2__.parse)((0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('variables') || ''),
     secretVariables: (0,dotenv__WEBPACK_IMPORTED_MODULE_2__.parse)((0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('secretVariables') || ''),
@@ -17454,15 +17464,23 @@ const input = {
     environment: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('environment'),
     token: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('token'),
 };
+// Validate inputs
+if (!input.test && !input.testSuite) {
+    _write__WEBPACK_IMPORTED_MODULE_4__/* .critical */ .kq('You need to provide test ID or testSuite ID to run');
+}
+if (input.testSuite && input.ref) {
+    _write__WEBPACK_IMPORTED_MODULE_4__/* .critical */ .kq('You cannot override Git ref for the test suite');
+}
+if (input.testSuite && input.preRunScript) {
+    _write__WEBPACK_IMPORTED_MODULE_4__/* .critical */ .kq('You cannot override pre-run script for the test suite');
+}
 // Constants
 const client = new _connection__WEBPACK_IMPORTED_MODULE_5__/* .Connection */ .e(await (0,_connection__WEBPACK_IMPORTED_MODULE_5__/* .resolveConfig */ .n)(input));
-// Validate inputs
-if (!input.test) {
-    _write__WEBPACK_IMPORTED_MODULE_4__/* .critical */ .kq('You need to provide test ID to run');
-}
 // Get test details
 _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Obtaining details');
-const details = await client.getTestDetails(input.test);
+const details = input.test
+    ? await client.getTestDetails(input.test)
+    : await client.getTestSuiteDetails(input.testSuite);
 if (!['git', 'git-dir', 'git-file'].includes(details.content?.type) && input.ref) {
     _write__WEBPACK_IMPORTED_MODULE_4__/* .critical */ .kq('Git revision provided, but the test is not sourced from Git.');
 }
@@ -17476,100 +17494,150 @@ for (const [name, value] of Object.entries(input.secretVariables || {})) {
 }
 // Run test
 _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Scheduling test execution');
-const execution = await client.scheduleTestExecution(input.test, {
+const executionInput = {
     name: input.executionName || undefined,
     preRunScript: input.preRunScript || undefined,
     variables: Object.keys(variables).length > 0 ? { ...details.executionRequest?.variables, ...variables } : undefined,
     contentRequest: input.ref ? { repository: { commit: input.ref } } : undefined,
     runningContext: _config__WEBPACK_IMPORTED_MODULE_7__/* .runningContext */ .Di,
-});
+};
+const execution = input.test
+    ? await client.scheduleTestExecution(input.test, executionInput)
+    : await client.scheduleTestSuiteExecution(input.testSuite, executionInput);
 _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(`Execution scheduled: ${execution.name} (${execution.id})`);
 // Stream logs
-_write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Attaching to logs');
-await new Promise((resolve) => {
-    let conn;
-    let timeoutRef;
-    let done = false;
-    const buildWebSocket = () => {
-        const ws = client.openLogsSocket(execution.id);
-        let failed = false;
-        ws.on('error', () => {
-            // Back-end may return falsely 400, so ignore errors and reconnect
-            failed = true;
-            if (!done) {
-                conn = buildWebSocket();
-                _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].italic */ .Z.italic('Reconnecting...'));
-            }
-            ws.close();
-        });
-        ws.on('close', () => {
-            if (!failed) {
-                done = true;
-                clearTimeout(timeoutRef);
-                resolve();
-            }
-        });
-        ws.on('message', (logData) => {
-            if (!logData) {
-                return;
-            }
-            try {
-                const dataToJSON = JSON.parse(logData);
-                const potentialOutput = dataToJSON?.result?.output || dataToJSON?.output;
-                if (potentialOutput) {
-                    _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(potentialOutput);
-                    if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_6__/* .TestExecutionStatus.failed */ .v.failed) {
-                        _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(`Test run failed: ${dataToJSON.errorMessage || 'failure'}`);
-                        resolve();
-                        ws.close();
-                        clearTimeout(timeoutRef);
-                    }
-                    else if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_6__/* .TestExecutionStatus.passed */ .v.passed) {
-                        _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM('Test run succeed\n');
-                        resolve();
-                        ws.close();
-                        clearTimeout(timeoutRef);
-                    }
+if (input.test) {
+    _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Attaching to logs');
+    await new Promise((resolve) => {
+        let conn;
+        let timeoutRef;
+        let done = false;
+        const buildWebSocket = () => {
+            const ws = client.openLogsSocket(execution.id);
+            let failed = false;
+            ws.on('error', () => {
+                // Back-end may return falsely 400, so ignore errors and reconnect
+                failed = true;
+                if (!done) {
+                    conn = buildWebSocket();
+                    _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].italic */ .Z.italic('Reconnecting...'));
+                }
+                ws.close();
+            });
+            ws.on('close', () => {
+                if (!failed) {
+                    done = true;
+                    clearTimeout(timeoutRef);
+                    resolve();
+                }
+            });
+            ws.on('message', (logData) => {
+                if (!logData) {
                     return;
                 }
-                if (dataToJSON.content) {
-                    _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(dataToJSON.content);
+                try {
+                    const dataToJSON = JSON.parse(logData);
+                    const potentialOutput = dataToJSON?.result?.output || dataToJSON?.output;
+                    if (potentialOutput) {
+                        _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(potentialOutput);
+                        if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed) {
+                            _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(`Test run failed: ${dataToJSON.errorMessage || 'failure'}`);
+                            resolve();
+                            ws.close();
+                            clearTimeout(timeoutRef);
+                        }
+                        else if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed) {
+                            _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM('Test run succeed\n');
+                            resolve();
+                            ws.close();
+                            clearTimeout(timeoutRef);
+                        }
+                        return;
+                    }
+                    if (dataToJSON.content) {
+                        _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(dataToJSON.content);
+                    }
+                    else {
+                        _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(logData);
+                    }
                 }
-                else {
+                catch (err) {
                     _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(logData);
                 }
+            });
+            return ws;
+        };
+        conn = buildWebSocket();
+        // Poll results as well, because there are problems with WS
+        const tick = async () => {
+            const { executionResult: { status } } = await client.getTestExecutionDetails(execution.id, true)
+                .catch(() => ({ executionResult: { status: _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.queued */ .F.queued } }));
+            if ([_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed, _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed, _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.cancelled */ .F.cancelled].includes(status)) {
+                done = true;
+                resolve();
+                conn.close();
+                return;
             }
-            catch (err) {
-                _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(logData);
-            }
-        });
-        return ws;
-    };
-    conn = buildWebSocket();
-    // Poll results as well, because there are problems with WS
-    const tick = async () => {
-        const { executionResult: { status } } = await client.getExecutionDetails(execution.id, true)
-            .catch(() => ({ executionResult: { status: _types__WEBPACK_IMPORTED_MODULE_6__/* .TestExecutionStatus.queued */ .v.queued } }));
-        if ([_types__WEBPACK_IMPORTED_MODULE_6__/* .TestExecutionStatus.passed */ .v.passed, _types__WEBPACK_IMPORTED_MODULE_6__/* .TestExecutionStatus.failed */ .v.failed, _types__WEBPACK_IMPORTED_MODULE_6__/* .TestExecutionStatus.cancelled */ .v.cancelled].includes(status)) {
-            done = true;
-            resolve();
-            conn.close();
-            return;
-        }
+            timeoutRef = setTimeout(tick, 2000);
+        };
         timeoutRef = setTimeout(tick, 2000);
+    });
+}
+else {
+    _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Watching steps');
+    const movements = {
+        [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.running */ .F.running]: [],
+        [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.cancelled */ .F.cancelled]: [],
+        [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed]: [],
+        [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed]: [],
     };
-    timeoutRef = setTimeout(tick, 2000);
-});
+    while (true) {
+        await (0,node_timers_promises__WEBPACK_IMPORTED_MODULE_0__.setTimeout)(1000);
+        const { status, stepResults } = await client.getTestSuiteExecutionDetails(execution.id);
+        const statusColors = {
+            [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed]: kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].green */ .Z.green,
+            [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed]: kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].red */ .Z.red,
+            [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.running */ .F.running]: kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].gray */ .Z.gray,
+            [_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.cancelled */ .F.cancelled]: kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].red */ .Z.red,
+        };
+        for (let index = 0; index < stepResults.length; index++) {
+            const { step, execution } = stepResults[index];
+            const name = step.delay ? `Delay: ${step.delay.duration}ms` : step.execute?.name;
+            const { status } = execution.executionResult;
+            if (status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.queued */ .F.queued || !status) {
+                continue;
+            }
+            if (!movements[status].includes(index)) {
+                movements[status].push(index);
+                process.stdout.write(statusColors[status](`[${status}] ${name}\n`));
+            }
+        }
+        if ([_types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed, _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed, _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.cancelled */ .F.cancelled].includes(status)) {
+            break;
+        }
+    }
+}
 // Obtain result
-_write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Obtaining test results');
+_write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Obtaining results');
 await (0,node_timers_promises__WEBPACK_IMPORTED_MODULE_0__.setTimeout)(500); // wait, so CRD will be surely up-to-date
-const { executionResult } = await client.getExecutionDetails(execution.id);
-const { status, errorMessage } = executionResult || {};
+const result = input.test
+    ? await client.getTestExecutionDetails(execution.id)
+    : await client.getTestSuiteExecutionDetails(execution.id);
+const status = input.test
+    ? result.executionResult?.status
+    : result.status;
+const errorMessage = input.test
+    ? result.executionResult?.errorMessage
+    : result.stepResults
+        .map(x => x.execution.executionResult)
+        .filter((x) => x.status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed && x.errorMessage)
+        .map((x) => x.errorMessage)
+        .join(', ');
 // Show the result
-if (status === 'passed') {
+if (status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed) {
     process.stdout.write(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].green */ .Z.green().bold(`✔ The run was successful\n`));
 }
-else if (status === 'cancelled') {
+else if (status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.cancelled */ .F.cancelled) {
     process.stdout.write(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].red */ .Z.red().bold(`× The run has been cancelled\n`));
 }
 else {
@@ -17577,15 +17645,15 @@ else {
 }
 // Show clarification for negative test
 if (details.executionRequest?.negativeTest) {
-    if (status === 'passed') {
+    if (status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed) {
         process.stdout.write(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].italic */ .Z.italic(`  Test run was expected to fail, and it failed as expected\n`));
     }
-    else if (status === 'failed') {
+    else if (status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.failed */ .F.failed) {
         process.stdout.write(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].italic */ .Z.italic(`  Test run was expected to fail, but it succeed\n`));
     }
 }
 // Exit code depending on result
-if (status !== 'passed') {
+if (status !== _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed) {
     process.exit(1);
 }
 
@@ -17599,16 +17667,16 @@ __webpack_async_result__();
 
 "use strict";
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "v": () => (/* binding */ TestExecutionStatus)
+/* harmony export */   "F": () => (/* binding */ ExecutionStatus)
 /* harmony export */ });
-var TestExecutionStatus;
-(function (TestExecutionStatus) {
-    TestExecutionStatus["passed"] = "passed";
-    TestExecutionStatus["failed"] = "failed";
-    TestExecutionStatus["cancelled"] = "cancelled";
-    TestExecutionStatus["running"] = "running";
-    TestExecutionStatus["queued"] = "queued";
-})(TestExecutionStatus || (TestExecutionStatus = {}));
+var ExecutionStatus;
+(function (ExecutionStatus) {
+    ExecutionStatus["passed"] = "passed";
+    ExecutionStatus["failed"] = "failed";
+    ExecutionStatus["cancelled"] = "cancelled";
+    ExecutionStatus["running"] = "running";
+    ExecutionStatus["queued"] = "queued";
+})(ExecutionStatus || (ExecutionStatus = {}));
 
 
 /***/ }),
