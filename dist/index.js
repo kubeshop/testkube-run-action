@@ -17457,6 +17457,7 @@ const input = {
     variables: (0,dotenv__WEBPACK_IMPORTED_MODULE_2__.parse)((0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('variables') || ''),
     secretVariables: (0,dotenv__WEBPACK_IMPORTED_MODULE_2__.parse)((0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('secretVariables') || ''),
     preRunScript: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('preRunScript'),
+    namespace: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('namespace'),
     executionName: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('executionName'),
     url: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('url'),
     ws: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('ws'),
@@ -17497,6 +17498,7 @@ _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Scheduling test execution'
 const executionInput = {
     name: input.executionName || undefined,
     preRunScript: input.preRunScript || undefined,
+    namespace: input.namespace || undefined,
     variables: Object.keys(variables).length > 0 ? { ...details.executionRequest?.variables, ...variables } : undefined,
     contentRequest: input.ref ? { repository: { commit: input.ref } } : undefined,
     runningContext: _config__WEBPACK_IMPORTED_MODULE_7__/* .runningContext */ .Di,

@@ -6,6 +6,7 @@ export interface ActionInput {
   variables?: Record<string, string>;
   secretVariables?: Record<string, string>;
   preRunScript?: string;
+  namespace?: string;
 
   executionName?: string;
 
@@ -73,6 +74,7 @@ interface RunningContext {
 }
 
 export interface TestExecutionData {
+  namespace?: string;
   name?: string;
   command?: string[];
   args?: string[];
@@ -107,6 +109,7 @@ export interface TestExecutionDetails {
 }
 
 export interface TestSuiteExecutionData {
+  namespace?: string;
   name?: string;
   httpProxy?: boolean;
   httpsProxy?: boolean;

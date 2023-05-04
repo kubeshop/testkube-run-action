@@ -17,6 +17,7 @@ const input: ActionInput = {
   variables: parseEnv(getInput('variables') || ''),
   secretVariables: parseEnv(getInput('secretVariables') || ''),
   preRunScript: getInput('preRunScript'),
+  namespace: getInput('namespace'),
 
   executionName: getInput('executionName'),
 
@@ -71,6 +72,7 @@ write.header('Scheduling test execution');
 const executionInput = {
   name: input.executionName || undefined,
   preRunScript: input.preRunScript || undefined,
+  namespace: input.namespace || undefined,
   variables: Object.keys(variables).length > 0 ? {...details.executionRequest?.variables, ...variables} : undefined,
   contentRequest: input.ref ? {repository: {commit: input.ref}} : undefined,
   runningContext,
