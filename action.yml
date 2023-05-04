@@ -4,6 +4,9 @@ description: "Execute tests and test suites on the Testkube platform."
 runs:
   using: "node16"
   main: "dist/index.js"
+branding:
+  icon: "check-circle"
+  color: "purple"
 inputs:
   # Test or test suite
   test:
