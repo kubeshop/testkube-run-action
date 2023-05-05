@@ -5,6 +5,9 @@
   "license": "MIT",
   "author": "Kubeshop",
   "main": "dist/index.js",
+  "engines": {
+    "npm": "^9.0.0"
+  },
   "scripts": {
     "build": "rimraf dist && npx ncc build src/index.ts --license licenses.txt"
   },
