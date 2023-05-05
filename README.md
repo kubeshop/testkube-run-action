@@ -151,36 +151,36 @@ There are different inputs available for tests and test suites, as well as for C
 ### Test
 
 | Required | Name              | Description                                                                                                                                                     |
-|----------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ✓        | `test`            | Test name in the Testkube environment                                                                                                                           |
-| ✗        | `ref`             | Override [**Git reference (branch, commit, tag)**](https://docs.testkube.io/concepts/tests/tests-creating/#create-a-test-from-git) for the test                 |
-| ✗        | `preRunScript`    | Override [**pre-run script**](https://docs.testkube.io/concepts/tests/tests-creating/#executing-a-prerun-script) for the test                                   |
-| ✗        | `variables`       | [**Basic variables**](https://docs.testkube.io/concepts/tests/tests-variables/) in the [**dotenv format**](https://hexdocs.pm/dotenvy/dotenv-file-format.html)  |
-| ✗        | `secretVariables` | [**Secret variables**](https://docs.testkube.io/concepts/tests/tests-variables/) in the [**dotenv format**](https://hexdocs.pm/dotenvy/dotenv-file-format.html) |
-| ✗        | `executionName`   | Override execution name, so you may i.e. mention the PR                                                                                                         |
-| ✗        | `namespace`       | Set namespace to run test in                                                                                                                                    |
+|:--------:|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|    ✓     | `test`            | Test name in the Testkube environment                                                                                                                           |
+|    ✗     | `ref`             | Override [**Git reference (branch, commit, tag)**](https://docs.testkube.io/concepts/tests/tests-creating/#create-a-test-from-git) for the test                 |
+|    ✗     | `preRunScript`    | Override [**pre-run script**](https://docs.testkube.io/concepts/tests/tests-creating/#executing-a-prerun-script) for the test                                   |
+|    ✗     | `variables`       | [**Basic variables**](https://docs.testkube.io/concepts/tests/tests-variables/) in the [**dotenv format**](https://hexdocs.pm/dotenvy/dotenv-file-format.html)  |
+|    ✗     | `secretVariables` | [**Secret variables**](https://docs.testkube.io/concepts/tests/tests-variables/) in the [**dotenv format**](https://hexdocs.pm/dotenvy/dotenv-file-format.html) |
+|    ✗     | `executionName`   | Override execution name, so you may i.e. mention the PR                                                                                                         |
+|    ✗     | `namespace`       | Set namespace to run test in                                                                                                                                    |
 
 ### Test suite
 
 | Required | Name              | Description                                                                                                                                                     |
-|----------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ✓        | `testSuite`       | Test suite name in the Testkube environment                                                                                                                     |
-| ✗        | `variables`       | [**Basic variables**](https://docs.testkube.io/concepts/tests/tests-variables/) in the [**dotenv format**](https://hexdocs.pm/dotenvy/dotenv-file-format.html)  |
-| ✗        | `secretVariables` | [**Secret variables**](https://docs.testkube.io/concepts/tests/tests-variables/) in the [**dotenv format**](https://hexdocs.pm/dotenvy/dotenv-file-format.html) |
-| ✗        | `executionName`   | Override execution name, so you may i.e. mention the PR                                                                                                         |
-| ✗        | `namespace`       | Set namespace to run test suite in                                                                                                                              |
+|:--------:|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|    ✓     | `testSuite`       | Test suite name in the Testkube environment                                                                                                                     |
+|    ✗     | `variables`       | [**Basic variables**](https://docs.testkube.io/concepts/tests/tests-variables/) in the [**dotenv format**](https://hexdocs.pm/dotenvy/dotenv-file-format.html)  |
+|    ✗     | `secretVariables` | [**Secret variables**](https://docs.testkube.io/concepts/tests/tests-variables/) in the [**dotenv format**](https://hexdocs.pm/dotenvy/dotenv-file-format.html) |
+|    ✗     | `executionName`   | Override execution name, so you may i.e. mention the PR                                                                                                         |
+|    ✗     | `namespace`       | Set namespace to run test suite in                                                                                                                              |
 
 ### Cloud
 
 | Required | Name           | Description                                                                                                                                                                                                                 |
-|----------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ✓        | `organization` | The organization ID from Testkube Cloud - it starts with `tkc_org`, you may find it i.e. in the dashboard's URL                                                                                                             |
-| ✓        | `environment`  | The environment ID from Testkube Cloud - it starts with `tkc_env`, you may find it i.e. in the dashboard's URL                                                                                                              |
-| ✓        | `token`        | API token that has at least a permission to run specific test or test suite. You may read more about [**creating API token**](https://docs.testkube.io/testkube-cloud/organization-management#api-tokens) in Testkube Cloud |
+|:--------:|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|    ✓     | `organization` | The organization ID from Testkube Cloud - it starts with `tkc_org`, you may find it i.e. in the dashboard's URL                                                                                                             |
+|    ✓     | `environment`  | The environment ID from Testkube Cloud - it starts with `tkc_env`, you may find it i.e. in the dashboard's URL                                                                                                              |
+|    ✓     | `token`        | API token that has at least a permission to run specific test or test suite. You may read more about [**creating API token**](https://docs.testkube.io/testkube-cloud/organization-management#api-tokens) in Testkube Cloud |
 
 ### Own instance
 
 | Required | Name  | Description                                                                                          |
-|----------|-------|------------------------------------------------------------------------------------------------------|
-| ✓        | `url` | URL for the API of the own Testkube instance                                                         |
-| ✗        | `ws`  | Override WebSocket API URL of the own Testkube instance (use it only if auto-detection doesn't work) |
+|:--------:|-------|------------------------------------------------------------------------------------------------------|
+|    ✓     | `url` | URL for the API of the own Testkube instance                                                         |
+|    ✗     | `ws`  | Override WebSocket API URL of the own Testkube instance (use it only if auto-detection doesn't work) |
