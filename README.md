@@ -1,6 +1,5 @@
 <p align="center">
-  <img src="assets/testkube-color-white.svg#gh-dark-mode-only" alt="Testkube Logo Light" />
-  <img src="assets/testkube-color-dark.svg#gh-light-mode-only" alt="Testkube Logo Dark" />
+  <img src="assets/testkube-logo.svg" alt="Testkube Logo" width="80"/>
 </p>
 
 <p align="center">
