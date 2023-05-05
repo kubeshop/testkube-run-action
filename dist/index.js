@@ -17637,6 +17637,12 @@ if (input.testSuite && input.ref) {
 if (input.testSuite && input.preRunScript) {
     _write__WEBPACK_IMPORTED_MODULE_4__/* .critical */ .kq('You cannot override pre-run script for the test suite');
 }
+if (Boolean(input.environment) !== Boolean(input.organization) || Boolean(input.organization) !== Boolean(input.token)) {
+    _write__WEBPACK_IMPORTED_MODULE_4__/* .critical */ .kq('You need to pass both environment, organization and token parameters when connecting to Cloud');
+}
+if (!input.organization && !input.url) {
+    _write__WEBPACK_IMPORTED_MODULE_4__/* .critical */ .kq('You need to either pass URL of Testkube instance, or credentials for the Cloud');
+}
 // Constants
 const client = new _connection__WEBPACK_IMPORTED_MODULE_5__/* .Connection */ .e(await (0,_connection__WEBPACK_IMPORTED_MODULE_5__/* .resolveConfig */ .n)(input));
 const entity = input.test ? new _entities__WEBPACK_IMPORTED_MODULE_8__/* .TestEntity */ .g(client, input.test) : new _entities__WEBPACK_IMPORTED_MODULE_8__/* .TestSuiteEntity */ .t(client, input.testSuite);
