@@ -41,6 +41,12 @@ if (input.testSuite && input.ref) {
 if (input.testSuite && input.preRunScript) {
   write.critical('You cannot override pre-run script for the test suite');
 }
+if (Boolean(input.environment) !== Boolean(input.organization) || Boolean(input.organization) !== Boolean(input.token)) {
+  write.critical('You need to pass both environment, organization and token parameters when connecting to Cloud');
+}
+if (!input.organization && !input.url) {
+  write.critical('You need to either pass URL of Testkube instance, or credentials for the Cloud');
+}
 
 // Constants
 
