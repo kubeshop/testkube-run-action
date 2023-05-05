@@ -17400,26 +17400,19 @@ class Connection {
 
 /***/ }),
 
-/***/ 4931:
+/***/ 4065:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
-
-// EXPORTS
-__nccwpck_require__.d(__webpack_exports__, {
-  "g": () => (/* binding */ TestEntity),
-  "t": () => (/* binding */ TestSuiteEntity)
-});
-
-// EXTERNAL MODULE: ./src/types.ts
-var types = __nccwpck_require__(5077);
-// EXTERNAL MODULE: ./src/write.ts
-var write = __nccwpck_require__(1262);
-// EXTERNAL MODULE: ./node_modules/kleur/index.mjs
-var kleur = __nccwpck_require__(5386);
-;// CONCATENATED MODULE: external "timers/promises"
-const promises_namespaceObject = require("timers/promises");
-;// CONCATENATED MODULE: ./src/entities.ts
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "g": () => (/* binding */ TestEntity),
+/* harmony export */   "t": () => (/* binding */ TestSuiteEntity)
+/* harmony export */ });
+/* harmony import */ var node_timers_promises__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(9397);
+/* harmony import */ var node_timers_promises__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_timers_promises__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var kleur__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(5386);
+/* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(5077);
+/* harmony import */ var _write__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(1262);
 
 
 
@@ -17456,7 +17449,7 @@ class TestEntity {
                     failed = true;
                     if (!done) {
                         conn = buildWebSocket();
-                        write/* log */.cM(kleur/* default.italic */.Z.italic('Reconnecting...'));
+                        _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].italic */ .Z.italic('Reconnecting...'));
                     }
                     ws.close();
                 });
@@ -17475,15 +17468,15 @@ class TestEntity {
                         const dataToJSON = JSON.parse(logData);
                         const potentialOutput = dataToJSON?.result?.output || dataToJSON?.output;
                         if (potentialOutput) {
-                            write/* log */.cM(potentialOutput);
-                            if (dataToJSON.status === types/* ExecutionStatus.failed */.F.failed) {
-                                write/* log */.cM(`Test run failed: ${dataToJSON.errorMessage || 'failure'}`);
+                            _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(potentialOutput);
+                            if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed) {
+                                _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(`Test run failed: ${dataToJSON.errorMessage || 'failure'}`);
                                 resolve();
                                 ws.close();
                                 clearTimeout(timeoutRef);
                             }
-                            else if (dataToJSON.status === types/* ExecutionStatus.passed */.F.passed) {
-                                write/* log */.cM('Test run succeed\n');
+                            else if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed) {
+                                _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM('Test run succeed\n');
                                 resolve();
                                 ws.close();
                                 clearTimeout(timeoutRef);
@@ -17491,14 +17484,14 @@ class TestEntity {
                             return;
                         }
                         if (dataToJSON.content) {
-                            write/* log */.cM(dataToJSON.content);
+                            _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(dataToJSON.content);
                         }
                         else {
-                            write/* log */.cM(logData);
+                            _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(logData);
                         }
                     }
                     catch (err) {
-                        write/* log */.cM(logData);
+                        _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(logData);
                     }
                 });
                 return ws;
@@ -17507,8 +17500,8 @@ class TestEntity {
             // Poll results as well, because there are problems with WS
             const tick = async () => {
                 const { executionResult: { status } } = await this.client.getTestExecutionDetails(id, true)
-                    .catch(() => ({ executionResult: { status: types/* ExecutionStatus.queued */.F.queued } }));
-                if ([types/* ExecutionStatus.passed */.F.passed, types/* ExecutionStatus.failed */.F.failed, types/* ExecutionStatus.cancelled */.F.cancelled].includes(status)) {
+                    .catch(() => ({ executionResult: { status: _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.queued */ .F.queued } }));
+                if ([_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.cancelled */ .F.cancelled, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.aborted */ .F.aborted, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.timeout */ .F.timeout].includes(status)) {
                     done = true;
                     resolve();
                     conn.close();
@@ -17539,7 +17532,7 @@ class TestSuiteEntity {
     getResult(data) {
         const errorMessage = data.stepResults
             .map(x => x.execution.executionResult)
-            .filter((x) => x.status === types/* ExecutionStatus.failed */.F.failed && x.errorMessage)
+            .filter((x) => x.status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed && x.errorMessage)
             .map((x) => x.errorMessage)
             .join(', ');
         return {
@@ -17549,25 +17542,29 @@ class TestSuiteEntity {
     }
     async watchExecution(id) {
         const movements = {
-            [types/* ExecutionStatus.running */.F.running]: [],
-            [types/* ExecutionStatus.cancelled */.F.cancelled]: [],
-            [types/* ExecutionStatus.passed */.F.passed]: [],
-            [types/* ExecutionStatus.failed */.F.failed]: [],
+            [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.running */ .F.running]: [],
+            [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.cancelled */ .F.cancelled]: [],
+            [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.aborted */ .F.aborted]: [],
+            [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed]: [],
+            [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed]: [],
+            [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.timeout */ .F.timeout]: [],
         };
         while (true) {
-            await (0,promises_namespaceObject.setTimeout)(1000);
+            await (0,node_timers_promises__WEBPACK_IMPORTED_MODULE_0__.setTimeout)(1000);
             const { status, stepResults } = await this.client.getTestSuiteExecutionDetails(id);
             const statusColors = {
-                [types/* ExecutionStatus.passed */.F.passed]: kleur/* default.green */.Z.green,
-                [types/* ExecutionStatus.failed */.F.failed]: kleur/* default.red */.Z.red,
-                [types/* ExecutionStatus.running */.F.running]: kleur/* default.gray */.Z.gray,
-                [types/* ExecutionStatus.cancelled */.F.cancelled]: kleur/* default.red */.Z.red,
+                [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].green */ .Z.green,
+                [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].red */ .Z.red,
+                [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.running */ .F.running]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].gray */ .Z.gray,
+                [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.cancelled */ .F.cancelled]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].red */ .Z.red,
+                [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.aborted */ .F.aborted]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].red */ .Z.red,
+                [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.timeout */ .F.timeout]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].red */ .Z.red,
             };
             for (let index = 0; index < stepResults.length; index++) {
                 const { step, execution } = stepResults[index];
                 const name = step.delay ? `🕑 ${step.delay.duration}ms` : step.execute?.name;
                 const { status } = execution.executionResult;
-                if (status === types/* ExecutionStatus.queued */.F.queued || !status) {
+                if (status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.queued */ .F.queued || !status) {
                     continue;
                 }
                 if (!movements[status].includes(index)) {
@@ -17575,7 +17572,7 @@ class TestSuiteEntity {
                     process.stdout.write(statusColors[status](`[${status}] ${name}\n`));
                 }
             }
-            if ([types/* ExecutionStatus.passed */.F.passed, types/* ExecutionStatus.failed */.F.failed, types/* ExecutionStatus.cancelled */.F.cancelled].includes(status)) {
+            if ([_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.cancelled */ .F.cancelled].includes(status)) {
                 break;
             }
         }
@@ -17602,7 +17599,7 @@ __nccwpck_require__.r(__webpack_exports__);
 /* harmony import */ var _connection__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(1134);
 /* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(5077);
 /* harmony import */ var _config__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(6373);
-/* harmony import */ var _entities__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(4931);
+/* harmony import */ var _entities__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(4065);
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_9__ = __nccwpck_require__(1314);
 
 
@@ -17672,7 +17669,7 @@ const { status, errorMessage } = entity.getResult(await entity.getExecution(exec
 if (status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.passed */ .F.passed) {
     process.stdout.write(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].green */ .Z.green().bold(`✔ The run was successful\n`));
 }
-else if (status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.cancelled */ .F.cancelled) {
+else if (status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.cancelled */ .F.cancelled || status === _types__WEBPACK_IMPORTED_MODULE_6__/* .ExecutionStatus.aborted */ .F.aborted) {
     process.stdout.write(kleur__WEBPACK_IMPORTED_MODULE_3__/* ["default"].red */ .Z.red().bold(`× The run has been cancelled\n`));
 }
 else {
@@ -17708,7 +17705,9 @@ var ExecutionStatus;
 (function (ExecutionStatus) {
     ExecutionStatus["passed"] = "passed";
     ExecutionStatus["failed"] = "failed";
+    ExecutionStatus["aborted"] = "aborted";
     ExecutionStatus["cancelled"] = "cancelled";
+    ExecutionStatus["timeout"] = "timeout";
     ExecutionStatus["running"] = "running";
     ExecutionStatus["queued"] = "queued";
 })(ExecutionStatus || (ExecutionStatus = {}));

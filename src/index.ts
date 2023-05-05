@@ -2,10 +2,9 @@ import {setTimeout as timeout} from 'node:timers/promises';
 import {getInput} from '@actions/core';
 import {parse as parseEnv} from 'dotenv';
 import kleur from 'kleur';
-import type {WebSocket} from 'ws';
 import * as write from './write';
 import {Connection, resolveConfig} from './connection';
-import {ActionInput, ExecutionStatus, TestExecutionDetails, TestSuiteExecutionDetails, Variable} from './types';
+import {ActionInput, ExecutionStatus} from './types';
 import {runningContext} from './config';
 import {TestEntity, TestSuiteEntity} from './entities';
 import {formatVariables} from './utils';
@@ -84,7 +83,7 @@ const {status, errorMessage} = entity.getResult(await entity.getExecution(execut
 // Show the result
 if (status === ExecutionStatus.passed) {
   process.stdout.write(kleur.green().bold(`✔ The run was successful\n`));
-} else if (status === ExecutionStatus.cancelled) {
+} else if (status === ExecutionStatus.cancelled || status === ExecutionStatus.aborted) {
   process.stdout.write(kleur.red().bold(`× The run has been cancelled\n`));
 } else {
   process.stdout.write(kleur.red().bold(`× The run has failed: ${errorMessage || 'failure'}\n`));

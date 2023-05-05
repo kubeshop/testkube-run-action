@@ -112,7 +112,7 @@ export class TestEntity implements Entity {
       const tick = async () => {
         const {executionResult: {status}} = await this.client.getTestExecutionDetails(id, true)
             .catch(() => ({executionResult: {status: ExecutionStatus.queued}}));
-        if ([ExecutionStatus.passed, ExecutionStatus.failed, ExecutionStatus.cancelled].includes(status)) {
+        if ([ExecutionStatus.passed, ExecutionStatus.failed, ExecutionStatus.cancelled, ExecutionStatus.aborted, ExecutionStatus.timeout].includes(status)) {
           done = true;
           resolve();
           conn.close();
@@ -157,8 +157,10 @@ export class TestSuiteEntity implements Entity {
     const movements: Record<Exclude<ExecutionStatus, ExecutionStatus.queued>, number[]> = {
       [ExecutionStatus.running]: [],
       [ExecutionStatus.cancelled]: [],
+      [ExecutionStatus.aborted]: [],
       [ExecutionStatus.passed]: [],
       [ExecutionStatus.failed]: [],
+      [ExecutionStatus.timeout]: [],
     };
 
     while (true) {
@@ -170,6 +172,8 @@ export class TestSuiteEntity implements Entity {
         [ExecutionStatus.failed]: kleur.red,
         [ExecutionStatus.running]: kleur.gray,
         [ExecutionStatus.cancelled]: kleur.red,
+        [ExecutionStatus.aborted]: kleur.red,
+        [ExecutionStatus.timeout]: kleur.red,
       };
 
       for (let index = 0; index < stepResults.length; index++) {

@@ -28,7 +28,9 @@ export interface ConnectionConfig {
 export enum ExecutionStatus {
   passed = 'passed',
   failed = 'failed',
+  aborted = 'aborted',
   cancelled = 'cancelled',
+  timeout = 'timeout',
   running = 'running',
   queued = 'queued',
 }
