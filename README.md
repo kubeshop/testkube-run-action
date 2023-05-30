@@ -41,7 +41,7 @@ Use it to run tests and test suites and obtain results directly in the GitHub's 
 2. [Inputs](#inputs)
    1. [Test](#test)
    2. [Test Suite](#test-suite)
-   3. [Cloud](#cloud)
+   3. [Cloud and Enterprise](#cloud-and-enterprise)
    4. [Own instance](#own-instance)
 
 ## Usage
@@ -169,13 +169,14 @@ There are different inputs available for tests and test suites, as well as for C
 |    ✗     | `executionName`   | Override execution name, so you may i.e. mention the PR                                                                                                         |
 |    ✗     | `namespace`       | Set namespace to run test suite in                                                                                                                              |
 
-### Cloud
+### Cloud and Enterprise
 
-| Required | Name           | Description                                                                                                                                                                                                                 |
-|:--------:|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|    ✓     | `organization` | The organization ID from Testkube Cloud - it starts with `tkc_org`, you may find it i.e. in the dashboard's URL                                                                                                             |
-|    ✓     | `environment`  | The environment ID from Testkube Cloud - it starts with `tkc_env`, you may find it i.e. in the dashboard's URL                                                                                                              |
-|    ✓     | `token`        | API token that has at least a permission to run specific test or test suite. You may read more about [**creating API token**](https://docs.testkube.io/testkube-cloud/organization-management#api-tokens) in Testkube Cloud |
+| Required | Name           | Description                                                                                                                                                                                                                               |
+|:--------:|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|    ✓     | `organization` | The organization ID from Testkube Cloud or Enterprise - it starts with `tkc_org`, you may find it i.e. in the dashboard's URL                                                                                                             |
+|    ✓     | `environment`  | The environment ID from Testkube Cloud or Enterprise - it starts with `tkc_env`, you may find it i.e. in the dashboard's URL                                                                                                              |
+|    ✓     | `token`        | API token that has at least a permission to run specific test or test suite. You may read more about [**creating API token**](https://docs.testkube.io/testkube-cloud/organization-management#api-tokens) in Testkube Cloud or Enterprise |
+|    ✗     | `url`          | URL of the Testkube Enterprise instance, if applicable                                                                                                                                                                                    |
 
 ### Own instance
 
