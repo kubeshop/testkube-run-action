@@ -17469,7 +17469,7 @@ class TestEntity {
                     }
                     try {
                         const dataToJSON = JSON.parse(logData);
-                        const potentialOutput = dataToJSON?.result?.output || dataToJSON?.output;
+                        const potentialOutput = dataToJSON?.result?.output || dataToJSON?.output || dataToJSON?.log_message;
                         if (potentialOutput) {
                             _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(potentialOutput);
                             if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed) {

@@ -76,7 +76,7 @@ export class TestEntity implements Entity {
           }
           try {
             const dataToJSON = JSON.parse(logData as any);
-            const potentialOutput = dataToJSON?.result?.output || dataToJSON?.output;
+            const potentialOutput = dataToJSON?.result?.output || dataToJSON?.output || dataToJSON?.log_message;
 
             if (potentialOutput) {
               write.log(potentialOutput);
