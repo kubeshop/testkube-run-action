@@ -4,7 +4,7 @@ import {parse as parseEnv} from 'dotenv';
 import kleur from 'kleur';
 import * as write from './write';
 import {Connection, resolveConfig} from './connection';
-import {ActionInput, ExecutionStatus} from './types';
+import {ActionInput, ExecutionStatus, TestDetails} from './types';
 import {runningContext} from './config';
 import {TestEntity, TestSuiteEntity} from './entities';
 import {formatVariables} from './utils';
@@ -57,8 +57,10 @@ const entity = input.test ? new TestEntity(client, input.test) : new TestSuiteEn
 
 write.header('Obtaining details');
 const details = await entity.get();
+const sourceId = (details as TestDetails).source;
+const source = sourceId ? await client.getSourceDetails(sourceId) : null;
 
-if (!['git', 'git-dir', 'git-file'].includes(details.content?.type!) && input.ref) {
+if (input.ref && !['git', 'git-dir', 'git-file'].includes(details.content?.type || source?.type!)) {
   write.critical('Git revision provided, but the test is not sourced from Git.');
 }
 
