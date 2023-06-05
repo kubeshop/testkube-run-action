@@ -46,6 +46,11 @@ export interface Variable {
   };
 }
 
+export interface TestSource {
+  type: string;
+  name: string;
+}
+
 export interface TestDetails {
   executionRequest?: {
     negativeTest?: boolean;
@@ -54,6 +59,7 @@ export interface TestDetails {
   content?: {
     type: string;
   };
+  source?: string;
 }
 
 export interface TestSuiteDetails {

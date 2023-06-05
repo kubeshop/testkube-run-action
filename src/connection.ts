@@ -10,7 +10,7 @@ import {
   ConnectionConfig,
   TestDetails,
   TestExecutionData,
-  TestExecutionDetails,
+  TestExecutionDetails, TestSource,
   TestSuiteDetails, TestSuiteExecutionData, TestSuiteExecutionDetails
 } from './types';
 
@@ -131,6 +131,10 @@ export class Connection {
 
   getTestSuiteExecutionDetails(executionId: string, allowFailure?: boolean): Promise<TestSuiteExecutionDetails> {
     return this.get<TestSuiteExecutionDetails>(`/test-suite-executions/${executionId}`, allowFailure);
+  }
+
+  getSourceDetails(id: string, allowFailure?: boolean): Promise<TestSource> {
+    return this.get<TestSource>(`/test-sources/${id}`, allowFailure);
   }
 
   openLogsSocket(executionId: string): WebSocket {

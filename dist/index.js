@@ -17392,6 +17392,9 @@ class Connection {
     getTestSuiteExecutionDetails(executionId, allowFailure) {
         return this.get(`/test-suite-executions/${executionId}`, allowFailure);
     }
+    getSourceDetails(id, allowFailure) {
+        return this.get(`/test-sources/${id}`, allowFailure);
+    }
     openLogsSocket(executionId) {
         return this.ws(`/executions/${executionId}/logs/stream`);
     }
@@ -17649,7 +17652,9 @@ const entity = input.test ? new _entities__WEBPACK_IMPORTED_MODULE_8__/* .TestEn
 // Get test details
 _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Obtaining details');
 const details = await entity.get();
-if (!['git', 'git-dir', 'git-file'].includes(details.content?.type) && input.ref) {
+const sourceId = details.source;
+const source = sourceId ? await client.getSourceDetails(sourceId) : null;
+if (input.ref && !['git', 'git-dir', 'git-file'].includes(details.content?.type || source?.type)) {
     _write__WEBPACK_IMPORTED_MODULE_4__/* .critical */ .kq('Git revision provided, but the test is not sourced from Git.');
 }
 // Run test
