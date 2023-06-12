@@ -24,6 +24,7 @@ const input: ActionInput = {
 
   url: getInput('url'),
   ws: getInput('ws'),
+  dashboardUrl: getInput('dashboardUrl'),
 
   organization: getInput('organization'),
   environment: getInput('environment'),
@@ -50,7 +51,8 @@ if (!input.organization && !input.url) {
 
 // Constants
 
-const client = new Connection(await resolveConfig(input));
+const config = await resolveConfig(input);
+const client = new Connection(config);
 const entity = input.test ? new TestEntity(client, input.test) : new TestSuiteEntity(client, input.testSuite!);
 
 // Get test details
@@ -78,6 +80,13 @@ const execution = await entity.schedule({
 });
 
 write.log(`Execution scheduled: ${execution.name} (${execution.id})`);
+if (config.dashboard) {
+  if (input.test) {
+    write.log(`Dashboard URL: ${config.dashboard}/tests/executions/${input.test}/execution/${execution.id}`);
+  } else {
+    write.log(`Dashboard URL: ${config.dashboard}/test-suites/executions/${input.testSuite}/execution/${execution.id}`);
+  }
+}
 
 // Stream logs
 write.header('Attaching to logs');
