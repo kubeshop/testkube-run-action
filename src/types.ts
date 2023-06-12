@@ -12,6 +12,7 @@ export interface ActionInput {
 
   url?: string;
   ws?: string;
+  dashboardUrl?: string;
 
   organization?: string;
   environment?: string;
@@ -21,6 +22,7 @@ export interface ActionInput {
 export interface ConnectionConfig {
   url: string;
   ws: string;
+  dashboard?: string;
   token?: string;
   cloud: boolean;
 }

@@ -177,10 +177,12 @@ There are different inputs available for tests and test suites, as well as for C
 |    ✓     | `environment`  | The environment ID from Testkube Cloud or Enterprise - it starts with `tkc_env`, you may find it i.e. in the dashboard's URL                                                                                                              |
 |    ✓     | `token`        | API token that has at least a permission to run specific test or test suite. You may read more about [**creating API token**](https://docs.testkube.io/testkube-cloud/organization-management#api-tokens) in Testkube Cloud or Enterprise |
 |    ✗     | `url`          | URL of the Testkube Enterprise instance, if applicable                                                                                                                                                                                    |
+|    ✗     | `dashboardUrl` | URL of the Testkube Enterprise dashboard, if applicable, to display links for the execution                                                                                                                                               |
 
 ### Own instance
 
-| Required | Name  | Description                                                                                          |
-|:--------:|-------|------------------------------------------------------------------------------------------------------|
-|    ✓     | `url` | URL for the API of the own Testkube instance                                                         |
-|    ✗     | `ws`  | Override WebSocket API URL of the own Testkube instance (use it only if auto-detection doesn't work) |
+| Required | Name           | Description                                                                                          |
+|:--------:|----------------|------------------------------------------------------------------------------------------------------|
+|    ✓     | `url`          | URL for the API of the own Testkube instance                                                         |
+|    ✗     | `ws`           | Override WebSocket API URL of the own Testkube instance (use it only if auto-detection doesn't work) |
+|    ✗     | `dashboardUrl` | URL for the Dashboard of the own Testkube instance, to display links for the execution               |

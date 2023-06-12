@@ -11405,10 +11405,12 @@ const knownInstances = {
     'cloud.testkube.io': {
         api: 'https://api.testkube.io',
         ws: 'wss://websockets.testkube.io',
+        dashboard: 'https://cloud.testkube.io',
     },
     'cloud.testkube.xyz': {
         api: 'https://api.testkube.xyz',
         ws: 'wss://websockets.testkube.xyz',
+        dashboard: 'https://cloud.testkube.xyz',
     },
 };
 const knownSuffixes = ['', '/v1', '/results/v1'];
@@ -17299,15 +17301,29 @@ async function resolveConfig(config) {
     // Sanitize URLs
     const sanitizedApiUrl = (0,utils/* sanitizeUrl */.Nm)(config.url || src_config/* defaultInstance */.Wt, 'http');
     const sanitizedWsUrl = (0,utils/* sanitizeUrl */.Nm)(config.ws || sanitizedApiUrl, 'ws');
+    const sanitizedDashboardUrl = config.dashboardUrl ? (0,utils/* sanitizeUrl */.Nm)(config.dashboardUrl, 'http') : undefined;
     // Auto-resolve known hosts
     const { host } = new external_node_url_namespaceObject.URL(sanitizedApiUrl);
     const detected = src_config/* knownInstances */.Sn[src_config/* instanceAliases */.AD[host] || host];
     const cloud = Boolean(detected || config.organization || config.environment);
     let baseUrl = detected?.api || sanitizedApiUrl;
     let baseWsUrl = detected?.ws || sanitizedWsUrl;
+    let baseDashboardUrl = detected?.dashboard || sanitizedDashboardUrl;
+    // Try to detect the dashboard's URL based on the API URL, using common patterns
+    if (!baseDashboardUrl) {
+        if (baseUrl.endsWith('/results/v1')) {
+            baseDashboardUrl = baseUrl.replace(/\/results\/v1$/, '');
+        }
+        else if (/^https?:\/\/api\.[^/]+$/.test(baseUrl)) {
+            baseDashboardUrl = baseUrl.replace('//api.', '//cloud.');
+        }
+    }
     if (cloud) {
         baseUrl = `${baseUrl}/organizations/${config.organization}/environments/${config.environment}/agent`;
         baseWsUrl = `${baseWsUrl}/organizations/${config.organization}/environments/${config.environment}/agent`;
+        if (baseDashboardUrl) {
+            baseDashboardUrl = `${baseDashboardUrl}/organization/${config.organization}/environment/${config.environment}/dashboard`;
+        }
     }
     else {
         let foundSuffix = false;
@@ -17342,6 +17358,7 @@ async function resolveConfig(config) {
     return {
         url: baseUrl,
         ws: baseWsUrl,
+        dashboard: baseDashboardUrl,
         token: config.token,
         cloud,
     };
@@ -17625,6 +17642,7 @@ const input = {
     executionName: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('executionName'),
     url: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('url'),
     ws: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('ws'),
+    dashboardUrl: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('dashboardUrl'),
     organization: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('organization'),
     environment: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('environment'),
     token: (0,_actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput)('token'),
@@ -17646,7 +17664,8 @@ if (!input.organization && !input.url) {
     _write__WEBPACK_IMPORTED_MODULE_4__/* .critical */ .kq('You need to either pass URL of Testkube instance, or credentials for the Cloud');
 }
 // Constants
-const client = new _connection__WEBPACK_IMPORTED_MODULE_5__/* .Connection */ .e(await (0,_connection__WEBPACK_IMPORTED_MODULE_5__/* .resolveConfig */ .n)(input));
+const config = await (0,_connection__WEBPACK_IMPORTED_MODULE_5__/* .resolveConfig */ .n)(input);
+const client = new _connection__WEBPACK_IMPORTED_MODULE_5__/* .Connection */ .e(config);
 const entity = input.test ? new _entities__WEBPACK_IMPORTED_MODULE_8__/* .TestEntity */ .g(client, input.test) : new _entities__WEBPACK_IMPORTED_MODULE_8__/* .TestSuiteEntity */ .t(client, input.testSuite);
 // Get test details
 _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Obtaining details');
@@ -17668,6 +17687,14 @@ const execution = await entity.schedule({
     runningContext: _config__WEBPACK_IMPORTED_MODULE_7__/* .runningContext */ .Di,
 });
 _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(`Execution scheduled: ${execution.name} (${execution.id})`);
+if (config.dashboard) {
+    if (input.test) {
+        _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(`Dashboard URL: ${config.dashboard}/tests/executions/${input.test}/execution/${execution.id}`);
+    }
+    else {
+        _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(`Dashboard URL: ${config.dashboard}/test-suites/executions/${input.testSuite}/execution/${execution.id}`);
+    }
+}
 // Stream logs
 _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Attaching to logs');
 await entity.watchExecution(execution.id);

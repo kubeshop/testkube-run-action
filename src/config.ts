@@ -5,14 +5,16 @@ export const instanceAliases: Record<string, string> = {
   'api.testkube.xyz': 'cloud.testkube.xyz',
 };
 
-export const knownInstances: Record<string, {api: string, ws: string}> = {
+export const knownInstances: Record<string, {api: string, ws: string, dashboard: string}> = {
   'cloud.testkube.io': {
     api: 'https://api.testkube.io',
     ws: 'wss://websockets.testkube.io',
+    dashboard: 'https://cloud.testkube.io',
   },
   'cloud.testkube.xyz': {
     api: 'https://api.testkube.xyz',
     ws: 'wss://websockets.testkube.xyz',
+    dashboard: 'https://cloud.testkube.xyz',
   },
 };
 

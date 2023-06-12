@@ -18,6 +18,7 @@ export async function resolveConfig(config: ActionInput): Promise<ConnectionConf
   // Sanitize URLs
   const sanitizedApiUrl = sanitizeUrl(config.url || defaultInstance, 'http');
   const sanitizedWsUrl = sanitizeUrl(config.ws || sanitizedApiUrl, 'ws');
+  const sanitizedDashboardUrl = config.dashboardUrl ? sanitizeUrl(config.dashboardUrl, 'http') : undefined;
 
   // Auto-resolve known hosts
   const {host} = new URL(sanitizedApiUrl);
@@ -25,10 +26,23 @@ export async function resolveConfig(config: ActionInput): Promise<ConnectionConf
   const cloud = Boolean(detected || config.organization || config.environment);
   let baseUrl = detected?.api || sanitizedApiUrl;
   let baseWsUrl = detected?.ws || sanitizedWsUrl;
+  let baseDashboardUrl = detected?.dashboard || sanitizedDashboardUrl;
+
+  // Try to detect the dashboard's URL based on the API URL, using common patterns
+  if (!baseDashboardUrl) {
+    if (baseUrl.endsWith('/results/v1')) {
+      baseDashboardUrl = baseUrl.replace(/\/results\/v1$/, '');
+    } else if (/^https?:\/\/api\.[^/]+$/.test(baseUrl)) {
+      baseDashboardUrl = baseUrl.replace('//api.', '//cloud.');
+    }
+  }
 
   if (cloud) {
     baseUrl = `${baseUrl}/organizations/${config.organization}/environments/${config.environment}/agent`;
     baseWsUrl = `${baseWsUrl}/organizations/${config.organization}/environments/${config.environment}/agent`;
+    if (baseDashboardUrl) {
+      baseDashboardUrl = `${baseDashboardUrl}/organization/${config.organization}/environment/${config.environment}/dashboard`;
+    }
   } else {
     let foundSuffix = false;
     let lastErr = null;
@@ -69,6 +83,7 @@ export async function resolveConfig(config: ActionInput): Promise<ConnectionConf
   return {
     url: baseUrl,
     ws: baseWsUrl,
+    dashboard: baseDashboardUrl,
     token: config.token,
     cloud,
   };
