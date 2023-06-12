@@ -48,6 +48,19 @@ export class TestEntity implements Entity {
       let timeoutRef: NodeJS.Timeout;
       let done = false;
 
+      const getIsFinished = async () => {
+        const {executionResult: {status}} = await this.client.getTestExecutionDetails(id, true)
+          .catch(() => ({executionResult: {status: ExecutionStatus.queued}}));
+        return [ExecutionStatus.passed, ExecutionStatus.failed, ExecutionStatus.cancelled, ExecutionStatus.aborted, ExecutionStatus.timeout].includes(status);
+      };
+
+      const finish = () => {
+        done = true;
+        clearTimeout(timeoutRef);
+        resolve();
+        conn.close();
+      };
+
       const buildWebSocket = () => {
         const ws = this.client.openLogsSocket(id);
 
@@ -56,13 +69,12 @@ export class TestEntity implements Entity {
           ws.close();
         });
 
-        ws.on('close', () => {
-          if (done) {
-            clearTimeout(timeoutRef);
-            resolve();
+        ws.on('close', async () => {
+          if (done || (await getIsFinished())) {
+            finish();
           } else {
             conn = buildWebSocket();
-            write.log(kleur.italic('Reconnecting...'));
+            write.log(kleur.italic('Connection lost, reconnecting...'));
           }
         });
 
@@ -78,16 +90,10 @@ export class TestEntity implements Entity {
               write.log(potentialOutput);
               if (dataToJSON.status === ExecutionStatus.failed) {
                 write.log(`Test run failed: ${dataToJSON.errorMessage || 'failure'}`);
-                done = true;
-                resolve();
-                ws.close();
-                clearTimeout(timeoutRef);
+                finish();
               } else if (dataToJSON.status === ExecutionStatus.passed) {
                 write.log('Test run succeed\n');
-                done = true;
-                resolve();
-                ws.close();
-                clearTimeout(timeoutRef);
+                finish();
               }
               return;
             }
@@ -108,12 +114,8 @@ export class TestEntity implements Entity {
 
       // Poll results as well, because there are problems with WS
       const tick = async () => {
-        const {executionResult: {status}} = await this.client.getTestExecutionDetails(id, true)
-            .catch(() => ({executionResult: {status: ExecutionStatus.queued}}));
-        if ([ExecutionStatus.passed, ExecutionStatus.failed, ExecutionStatus.cancelled, ExecutionStatus.aborted, ExecutionStatus.timeout].includes(status)) {
-          done = true;
-          resolve();
-          conn.close();
+        if (await getIsFinished()) {
+          finish();
           return;
         }
         timeoutRef = setTimeout(tick, 2000);

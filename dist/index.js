@@ -17461,20 +17461,30 @@ class TestEntity {
             let conn;
             let timeoutRef;
             let done = false;
+            const getIsFinished = async () => {
+                const { executionResult: { status } } = await this.client.getTestExecutionDetails(id, true)
+                    .catch(() => ({ executionResult: { status: _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.queued */ .F.queued } }));
+                return [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.cancelled */ .F.cancelled, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.aborted */ .F.aborted, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.timeout */ .F.timeout].includes(status);
+            };
+            const finish = () => {
+                done = true;
+                clearTimeout(timeoutRef);
+                resolve();
+                conn.close();
+            };
             const buildWebSocket = () => {
                 const ws = this.client.openLogsSocket(id);
                 ws.on('error', () => {
                     // Back-end may return falsely 400, so ignore errors and reconnect
                     ws.close();
                 });
-                ws.on('close', () => {
-                    if (done) {
-                        clearTimeout(timeoutRef);
-                        resolve();
+                ws.on('close', async () => {
+                    if (done || (await getIsFinished())) {
+                        finish();
                     }
                     else {
                         conn = buildWebSocket();
-                        _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].italic */ .Z.italic('Reconnecting...'));
+                        _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].italic */ .Z.italic('Connection lost, reconnecting...'));
                     }
                 });
                 ws.on('message', (logData) => {
@@ -17488,17 +17498,11 @@ class TestEntity {
                             _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(potentialOutput);
                             if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed) {
                                 _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(`Test run failed: ${dataToJSON.errorMessage || 'failure'}`);
-                                done = true;
-                                resolve();
-                                ws.close();
-                                clearTimeout(timeoutRef);
+                                finish();
                             }
                             else if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed) {
                                 _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM('Test run succeed\n');
-                                done = true;
-                                resolve();
-                                ws.close();
-                                clearTimeout(timeoutRef);
+                                finish();
                             }
                             return;
                         }
@@ -17518,12 +17522,8 @@ class TestEntity {
             conn = buildWebSocket();
             // Poll results as well, because there are problems with WS
             const tick = async () => {
-                const { executionResult: { status } } = await this.client.getTestExecutionDetails(id, true)
-                    .catch(() => ({ executionResult: { status: _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.queued */ .F.queued } }));
-                if ([_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.cancelled */ .F.cancelled, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.aborted */ .F.aborted, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.timeout */ .F.timeout].includes(status)) {
-                    done = true;
-                    resolve();
-                    conn.close();
+                if (await getIsFinished()) {
+                    finish();
                     return;
                 }
                 timeoutRef = setTimeout(tick, 2000);
