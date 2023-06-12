@@ -17446,21 +17446,18 @@ class TestEntity {
             let done = false;
             const buildWebSocket = () => {
                 const ws = this.client.openLogsSocket(id);
-                let failed = false;
                 ws.on('error', () => {
                     // Back-end may return falsely 400, so ignore errors and reconnect
-                    failed = true;
-                    if (!done) {
-                        conn = buildWebSocket();
-                        _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].italic */ .Z.italic('Reconnecting...'));
-                    }
                     ws.close();
                 });
                 ws.on('close', () => {
-                    if (!failed) {
-                        done = true;
+                    if (done) {
                         clearTimeout(timeoutRef);
                         resolve();
+                    }
+                    else {
+                        conn = buildWebSocket();
+                        _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].italic */ .Z.italic('Reconnecting...'));
                     }
                 });
                 ws.on('message', (logData) => {
@@ -17474,12 +17471,14 @@ class TestEntity {
                             _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(potentialOutput);
                             if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed) {
                                 _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM(`Test run failed: ${dataToJSON.errorMessage || 'failure'}`);
+                                done = true;
                                 resolve();
                                 ws.close();
                                 clearTimeout(timeoutRef);
                             }
                             else if (dataToJSON.status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed) {
                                 _write__WEBPACK_IMPORTED_MODULE_3__/* .log */ .cM('Test run succeed\n');
+                                done = true;
                                 resolve();
                                 ws.close();
                                 clearTimeout(timeoutRef);

@@ -50,23 +50,19 @@ export class TestEntity implements Entity {
 
       const buildWebSocket = () => {
         const ws = this.client.openLogsSocket(id);
-        let failed = false;
 
         ws.on('error', () => {
           // Back-end may return falsely 400, so ignore errors and reconnect
-          failed = true;
-          if (!done) {
-            conn = buildWebSocket();
-            write.log(kleur.italic('Reconnecting...'));
-          }
           ws.close();
         });
 
         ws.on('close', () => {
-          if (!failed) {
-            done = true;
+          if (done) {
             clearTimeout(timeoutRef);
             resolve();
+          } else {
+            conn = buildWebSocket();
+            write.log(kleur.italic('Reconnecting...'));
           }
         });
 
@@ -82,11 +78,13 @@ export class TestEntity implements Entity {
               write.log(potentialOutput);
               if (dataToJSON.status === ExecutionStatus.failed) {
                 write.log(`Test run failed: ${dataToJSON.errorMessage || 'failure'}`);
+                done = true;
                 resolve();
                 ws.close();
                 clearTimeout(timeoutRef);
               } else if (dataToJSON.status === ExecutionStatus.passed) {
                 write.log('Test run succeed\n');
+                done = true;
                 resolve();
                 ws.close();
                 clearTimeout(timeoutRef);
