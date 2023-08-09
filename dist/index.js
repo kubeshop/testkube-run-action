@@ -17297,6 +17297,20 @@ var src_config = __nccwpck_require__(6373);
 
 
 
+function mapExecute(execute) {
+    if (!execute) {
+        return [];
+    }
+    return []
+        .concat(execute)
+        .map(item => 'name' in item ? { test: item.name } : 'duration' in item ? { delay: item.duration } : item);
+}
+function isTestSuiteExecutionV2(execution) {
+    return execution && 'stepResults' in execution;
+}
+function isTestSuiteV2(suite) {
+    return !Array.isArray(suite?.steps?.[0]?.execute || []);
+}
 async function resolveConfig(config) {
     // Sanitize URLs
     const sanitizedApiUrl = (0,utils/* sanitizeUrl */.Nm)(config.url || src_config/* defaultInstance */.Wt, 'http');
@@ -17394,8 +17408,19 @@ class Connection {
     getTestDetails(testId, allowFailure) {
         return this.get(`/tests/${testId}`, allowFailure);
     }
-    getTestSuiteDetails(testSuiteId, allowFailure) {
-        return this.get(`/test-suites/${testSuiteId}`, allowFailure);
+    async getTestSuiteDetails(testSuiteId, allowFailure) {
+        const suite = await this.get(`/test-suites/${testSuiteId}`, allowFailure);
+        // Convert V2 to V3
+        if (isTestSuiteV2(suite)) {
+            return {
+                ...suite,
+                steps: suite.steps?.map(step => ({
+                    stopOnFailure: step.stopTestOnFailure,
+                    execute: mapExecute(step.execute || step.delay),
+                })),
+            };
+        }
+        return suite;
     }
     scheduleTestExecution(testId, data, allowFailure) {
         return this.post(`/tests/${testId}/executions`, data, allowFailure);
@@ -17406,8 +17431,20 @@ class Connection {
     getTestExecutionDetails(executionId, allowFailure) {
         return this.get(`/executions/${executionId}`, allowFailure);
     }
-    getTestSuiteExecutionDetails(executionId, allowFailure) {
-        return this.get(`/test-suite-executions/${executionId}`, allowFailure);
+    async getTestSuiteExecutionDetails(executionId, allowFailure) {
+        const execution = await this.get(`/test-suite-executions/${executionId}`, allowFailure);
+        // Convert V2 to V3
+        if (isTestSuiteExecutionV2(execution)) {
+            const { stepResults, ...rest } = execution;
+            return {
+                ...rest,
+                executeStepResults: stepResults.map((result) => ({
+                    execute: [{ execution: result.execution, step: mapExecute(result.step.execute)?.[0] }],
+                    step: { ...result.step, execute: mapExecute(result.step.execute) },
+                })),
+            };
+        }
+        return execution;
     }
     getSourceDetails(id, allowFailure) {
         return this.get(`/test-sources/${id}`, allowFailure);
@@ -17549,7 +17586,8 @@ class TestSuiteEntity {
         return this.client.scheduleTestSuiteExecution(this.id, data);
     }
     getResult(data) {
-        const errorMessage = data.stepResults
+        const executions = data.executeStepResults.map(x => x.execute).flat();
+        const errorMessage = executions
             .map(x => x.execution.executionResult)
             .filter((x) => x.status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed && x.errorMessage)
             .map((x) => x.errorMessage)
@@ -17570,7 +17608,7 @@ class TestSuiteEntity {
         };
         while (true) {
             await (0,node_timers_promises__WEBPACK_IMPORTED_MODULE_0__.setTimeout)(1000);
-            const { status, stepResults } = await this.client.getTestSuiteExecutionDetails(id);
+            const { status, executeStepResults } = await this.client.getTestSuiteExecutionDetails(id);
             const statusColors = {
                 [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].green */ .Z.green,
                 [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].red */ .Z.red,
@@ -17579,9 +17617,11 @@ class TestSuiteEntity {
                 [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.aborted */ .F.aborted]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].red */ .Z.red,
                 [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.timeout */ .F.timeout]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].red */ .Z.red,
             };
-            for (let index = 0; index < stepResults.length; index++) {
-                const { step, execution } = stepResults[index];
-                const name = step.delay ? `🕑 ${step.delay.duration}ms` : step.execute?.name;
+            const executions = executeStepResults.map(x => x.execute).flat();
+            for (let index = 0; index < executions.length; index++) {
+                const { step, execution } = executions[index];
+                const delay = /^(0|[1-9][0-9]*)$/.test(`${step.delay || ''}`) ? `${step.delay}ms` : step.delay;
+                const name = step.test || `🕑 ${delay}`;
                 const { status } = execution.executionResult;
                 if (status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.queued */ .F.queued || !status) {
                     continue;
