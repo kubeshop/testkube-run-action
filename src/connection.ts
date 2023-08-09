@@ -10,9 +10,33 @@ import {
   ConnectionConfig,
   TestDetails,
   TestExecutionData,
-  TestExecutionDetails, TestSource,
-  TestSuiteDetails, TestSuiteExecutionData, TestSuiteExecutionDetails
+  TestExecutionDetails,
+  TestSource,
+  TestSuiteDetails, TestSuiteDetailsV2,
+  TestSuiteExecutionData,
+  TestSuiteExecutionDetails,
+  TestSuiteExecutionDetailsV2,
+  TestSuiteStep,
 } from './types';
+
+function mapExecute(execute: any): TestSuiteStep[] {
+  if (!execute) {
+    return [];
+  }
+  return ([] as TestSuiteStep[])
+    .concat(execute!)
+    .map(item =>
+      'name' in item ? {test: item.name as string} : 'duration' in item ? {delay: (item as any).duration} : item
+    );
+}
+
+function isTestSuiteExecutionV2(execution: any): execution is TestSuiteExecutionDetailsV2 {
+  return execution && 'stepResults' in execution;
+}
+
+function isTestSuiteV2(suite: any): suite is TestSuiteDetailsV2 {
+  return !Array.isArray(suite?.steps?.[0]?.execute || []);
+}
 
 export async function resolveConfig(config: ActionInput): Promise<ConnectionConfig> {
   // Sanitize URLs
@@ -128,8 +152,20 @@ export class Connection {
     return this.get<TestDetails>(`/tests/${testId}`, allowFailure);
   }
 
-  getTestSuiteDetails(testSuiteId: string, allowFailure?: boolean): Promise<TestSuiteDetails> {
-    return this.get<TestSuiteDetails>(`/test-suites/${testSuiteId}`, allowFailure);
+  public async getTestSuiteDetails(testSuiteId: string, allowFailure?: boolean): Promise<TestSuiteDetails> {
+    const suite = await this.get<TestSuiteDetails | TestSuiteDetailsV2>(`/test-suites/${testSuiteId}`, allowFailure);
+
+    // Convert V2 to V3
+    if (isTestSuiteV2(suite)) {
+      return {
+        ...suite,
+        steps: suite.steps?.map(step => ({
+          stopOnFailure: step.stopTestOnFailure,
+          execute: mapExecute(step.execute || (step as any).delay!),
+        })),
+      };
+    }
+    return suite;
   }
 
   scheduleTestExecution(testId: string, data: TestExecutionData, allowFailure?: boolean): Promise<TestExecutionDetails> {
@@ -144,8 +180,21 @@ export class Connection {
     return this.get<TestExecutionDetails>(`/executions/${executionId}`, allowFailure);
   }
 
-  getTestSuiteExecutionDetails(executionId: string, allowFailure?: boolean): Promise<TestSuiteExecutionDetails> {
-    return this.get<TestSuiteExecutionDetails>(`/test-suite-executions/${executionId}`, allowFailure);
+  public async getTestSuiteExecutionDetails(executionId: string, allowFailure?: boolean): Promise<TestSuiteExecutionDetails> {
+    const execution = await this.get<TestSuiteExecutionDetails | TestSuiteExecutionDetailsV2>(`/test-suite-executions/${executionId}`, allowFailure);
+
+    // Convert V2 to V3
+    if (isTestSuiteExecutionV2(execution)) {
+      const {stepResults, ...rest} = execution;
+      return {
+        ...rest,
+        executeStepResults: stepResults.map((result: any) => ({
+          execute: [{execution: result.execution, step: mapExecute(result.step.execute)?.[0]}],
+          step: {...result.step, execute: mapExecute(result.step.execute)},
+        })),
+      };
+    }
+    return execution;
   }
 
   getSourceDetails(id: string, allowFailure?: boolean): Promise<TestSource> {

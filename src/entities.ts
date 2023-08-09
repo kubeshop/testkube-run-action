@@ -142,7 +142,8 @@ export class TestSuiteEntity implements Entity {
   }
 
   public getResult(data: TestSuiteExecutionDetails): ExecutionResult {
-    const errorMessage = data.stepResults
+    const executions = data.executeStepResults.map(x => x.execute).flat();
+    const errorMessage = executions
       .map(x => x.execution.executionResult)
       .filter((x) => x.status === ExecutionStatus.failed && x.errorMessage)
       .map((x) => x.errorMessage)
@@ -166,7 +167,7 @@ export class TestSuiteEntity implements Entity {
     while (true) {
       await timeout(1000);
 
-      const {status, stepResults} = await this.client.getTestSuiteExecutionDetails(id);
+      const {status, executeStepResults} = await this.client.getTestSuiteExecutionDetails(id);
       const statusColors: Record<keyof typeof movements, (txt: string) => string> = {
         [ExecutionStatus.passed]: kleur.green,
         [ExecutionStatus.failed]: kleur.red,
@@ -176,9 +177,11 @@ export class TestSuiteEntity implements Entity {
         [ExecutionStatus.timeout]: kleur.red,
       };
 
-      for (let index = 0; index < stepResults.length; index++) {
-        const {step, execution} = stepResults[index];
-        const name = step.delay ? `🕑 ${step.delay.duration}ms` : step.execute?.name;
+      const executions = executeStepResults.map(x => x.execute).flat();
+      for (let index = 0; index < executions.length; index++) {
+        const {step, execution} = executions[index];
+        const delay = /^(0|[1-9][0-9]*)$/.test(`${step.delay || ''}`) ? `${step.delay}ms` : step.delay;
+        const name = step.test || `🕑 ${delay}`;
         const {status} = execution.executionResult;
         if (status === ExecutionStatus.queued || !status) {
           continue;
