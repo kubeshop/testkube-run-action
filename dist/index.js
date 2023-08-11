@@ -17586,7 +17586,7 @@ class TestSuiteEntity {
         return this.client.scheduleTestSuiteExecution(this.id, data);
     }
     getResult(data) {
-        const executions = data.executeStepResults.map(x => x.execute).flat();
+        const executions = (data.executeStepResults || []).map(x => x.execute).flat();
         const errorMessage = executions
             .map(x => x.execution.executionResult)
             .filter((x) => x.status === _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed && x.errorMessage)
@@ -17608,7 +17608,7 @@ class TestSuiteEntity {
         };
         while (true) {
             await (0,node_timers_promises__WEBPACK_IMPORTED_MODULE_0__.setTimeout)(1000);
-            const { status, executeStepResults } = await this.client.getTestSuiteExecutionDetails(id);
+            const { status, executeStepResults = [] } = await this.client.getTestSuiteExecutionDetails(id);
             const statusColors = {
                 [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].green */ .Z.green,
                 [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed]: kleur__WEBPACK_IMPORTED_MODULE_1__/* ["default"].red */ .Z.red,

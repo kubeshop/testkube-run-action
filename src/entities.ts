@@ -142,7 +142,7 @@ export class TestSuiteEntity implements Entity {
   }
 
   public getResult(data: TestSuiteExecutionDetails): ExecutionResult {
-    const executions = data.executeStepResults.map(x => x.execute).flat();
+    const executions = (data.executeStepResults || []).map(x => x.execute).flat();
     const errorMessage = executions
       .map(x => x.execution.executionResult)
       .filter((x) => x.status === ExecutionStatus.failed && x.errorMessage)
@@ -167,7 +167,7 @@ export class TestSuiteEntity implements Entity {
     while (true) {
       await timeout(1000);
 
-      const {status, executeStepResults} = await this.client.getTestSuiteExecutionDetails(id);
+      const {status, executeStepResults = []} = await this.client.getTestSuiteExecutionDetails(id);
       const statusColors: Record<keyof typeof movements, (txt: string) => string> = {
         [ExecutionStatus.passed]: kleur.green,
         [ExecutionStatus.failed]: kleur.red,
