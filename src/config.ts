@@ -20,4 +20,4 @@ export const knownInstances: Record<string, {api: string, ws: string, dashboard:
 
 export const knownSuffixes: string[] = ['', '/v1', '/results/v1'];
 
-export const runningContext = {type: 'testtrigger', context: 'GitHub Action'};
+export const runningContext = {type: 'github-run-action', context: 'github-run-action'};
