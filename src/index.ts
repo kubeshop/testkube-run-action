@@ -5,7 +5,6 @@ import kleur from 'kleur';
 import * as write from './write';
 import {Connection, resolveConfig} from './connection';
 import {ActionInput, ExecutionStatus, TestDetails} from './types';
-import {runningContext} from './config';
 import {TestEntity, TestSuiteEntity} from './entities';
 import {formatVariables} from './utils';
 
@@ -76,7 +75,10 @@ const execution = await entity.schedule({
   namespace: input.namespace || undefined,
   variables: Object.keys(variables).length > 0 ? {...details.executionRequest?.variables, ...variables} : undefined,
   contentRequest: input.ref ? {repository: {commit: input.ref}} : undefined,
-  runningContext,
+  runningContext: {
+    type: 'githubaction',
+    context: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+  },
 });
 
 write.log(`Execution scheduled: ${execution.name} (${execution.id})`);

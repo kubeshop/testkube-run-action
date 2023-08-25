@@ -11385,41 +11385,7 @@ function socketOnError() {
 
 /***/ }),
 
-/***/ 6373:
-/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
-
-"use strict";
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "AD": () => (/* binding */ instanceAliases),
-/* harmony export */   "Cf": () => (/* binding */ knownSuffixes),
-/* harmony export */   "Di": () => (/* binding */ runningContext),
-/* harmony export */   "Sn": () => (/* binding */ knownInstances),
-/* harmony export */   "Wt": () => (/* binding */ defaultInstance)
-/* harmony export */ });
-const defaultInstance = 'cloud.testkube.io';
-const instanceAliases = {
-    'api.testkube.io': 'cloud.testkube.io',
-    'api.testkube.xyz': 'cloud.testkube.xyz',
-};
-const knownInstances = {
-    'cloud.testkube.io': {
-        api: 'https://api.testkube.io',
-        ws: 'wss://websockets.testkube.io',
-        dashboard: 'https://cloud.testkube.io',
-    },
-    'cloud.testkube.xyz': {
-        api: 'https://api.testkube.xyz',
-        ws: 'wss://websockets.testkube.xyz',
-        dashboard: 'https://cloud.testkube.xyz',
-    },
-};
-const knownSuffixes = ['', '/v1', '/results/v1'];
-const runningContext = { type: 'testtrigger', context: 'GitHub Action' };
-
-
-/***/ }),
-
-/***/ 1134:
+/***/ 6957:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -17287,8 +17253,27 @@ var websocket_server = __nccwpck_require__(8887);
 var write = __nccwpck_require__(1262);
 // EXTERNAL MODULE: ./src/utils.ts
 var utils = __nccwpck_require__(1314);
-// EXTERNAL MODULE: ./src/config.ts
-var src_config = __nccwpck_require__(6373);
+;// CONCATENATED MODULE: ./src/config.ts
+const defaultInstance = 'cloud.testkube.io';
+const instanceAliases = {
+    'api.testkube.io': 'cloud.testkube.io',
+    'api.testkube.xyz': 'cloud.testkube.xyz',
+};
+const knownInstances = {
+    'cloud.testkube.io': {
+        api: 'https://api.testkube.io',
+        ws: 'wss://websockets.testkube.io',
+        dashboard: 'https://cloud.testkube.io',
+    },
+    'cloud.testkube.xyz': {
+        api: 'https://api.testkube.xyz',
+        ws: 'wss://websockets.testkube.xyz',
+        dashboard: 'https://cloud.testkube.xyz',
+    },
+};
+const knownSuffixes = ['', '/v1', '/results/v1'];
+const runningContext = { type: 'github-run-action', context: 'github-run-action' };
+
 ;// CONCATENATED MODULE: ./src/connection.ts
 
 
@@ -17313,12 +17298,12 @@ function isTestSuiteV2(suite) {
 }
 async function resolveConfig(config) {
     // Sanitize URLs
-    const sanitizedApiUrl = (0,utils/* sanitizeUrl */.Nm)(config.url || src_config/* defaultInstance */.Wt, 'http');
+    const sanitizedApiUrl = (0,utils/* sanitizeUrl */.Nm)(config.url || defaultInstance, 'http');
     const sanitizedWsUrl = (0,utils/* sanitizeUrl */.Nm)(config.ws || sanitizedApiUrl, 'ws');
     const sanitizedDashboardUrl = config.dashboardUrl ? (0,utils/* sanitizeUrl */.Nm)(config.dashboardUrl, 'http') : undefined;
     // Auto-resolve known hosts
     const { host } = new external_node_url_namespaceObject.URL(sanitizedApiUrl);
-    const detected = src_config/* knownInstances */.Sn[src_config/* instanceAliases */.AD[host] || host];
+    const detected = knownInstances[instanceAliases[host] || host];
     const cloud = Boolean(detected || config.organization || config.environment);
     let baseUrl = detected?.api || sanitizedApiUrl;
     let baseWsUrl = detected?.ws || sanitizedWsUrl;
@@ -17342,7 +17327,7 @@ async function resolveConfig(config) {
     else {
         let foundSuffix = false;
         let lastErr = null;
-        for (const suffix of src_config/* knownSuffixes */.Cf) {
+        for (const suffix of knownSuffixes) {
             try {
                 const res = await got_dist_source(`${baseUrl}${suffix}/info`);
                 // Ensure it's a valid response
@@ -17655,12 +17640,10 @@ __nccwpck_require__.r(__webpack_exports__);
 /* harmony import */ var dotenv__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__nccwpck_require__.n(dotenv__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var kleur__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(5386);
 /* harmony import */ var _write__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(1262);
-/* harmony import */ var _connection__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(1134);
+/* harmony import */ var _connection__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(6957);
 /* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(5077);
-/* harmony import */ var _config__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(6373);
-/* harmony import */ var _entities__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(4065);
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_9__ = __nccwpck_require__(1314);
-
+/* harmony import */ var _entities__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(4065);
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(1314);
 
 
 
@@ -17706,7 +17689,7 @@ if (!input.organization && !input.url) {
 // Constants
 const config = await (0,_connection__WEBPACK_IMPORTED_MODULE_5__/* .resolveConfig */ .n)(input);
 const client = new _connection__WEBPACK_IMPORTED_MODULE_5__/* .Connection */ .e(config);
-const entity = input.test ? new _entities__WEBPACK_IMPORTED_MODULE_8__/* .TestEntity */ .g(client, input.test) : new _entities__WEBPACK_IMPORTED_MODULE_8__/* .TestSuiteEntity */ .t(client, input.testSuite);
+const entity = input.test ? new _entities__WEBPACK_IMPORTED_MODULE_7__/* .TestEntity */ .g(client, input.test) : new _entities__WEBPACK_IMPORTED_MODULE_7__/* .TestSuiteEntity */ .t(client, input.testSuite);
 // Get test details
 _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Obtaining details');
 const details = await entity.get();
@@ -17717,14 +17700,17 @@ if (input.ref && !['git', 'git-dir', 'git-file'].includes(details.content?.type 
 }
 // Run test
 _write__WEBPACK_IMPORTED_MODULE_4__/* .header */ .Fs('Scheduling test execution');
-const variables = (0,_utils__WEBPACK_IMPORTED_MODULE_9__/* .formatVariables */ .t3)(input.variables, input.secretVariables);
+const variables = (0,_utils__WEBPACK_IMPORTED_MODULE_8__/* .formatVariables */ .t3)(input.variables, input.secretVariables);
 const execution = await entity.schedule({
     name: input.executionName || undefined,
     preRunScript: input.preRunScript || undefined,
     namespace: input.namespace || undefined,
     variables: Object.keys(variables).length > 0 ? { ...details.executionRequest?.variables, ...variables } : undefined,
     contentRequest: input.ref ? { repository: { commit: input.ref } } : undefined,
-    runningContext: _config__WEBPACK_IMPORTED_MODULE_7__/* .runningContext */ .Di,
+    runningContext: {
+        type: 'githubaction',
+        context: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+    },
 });
 _write__WEBPACK_IMPORTED_MODULE_4__/* .log */ .cM(`Execution scheduled: ${execution.name} (${execution.id})`);
 if (config.dashboard) {
