@@ -17258,6 +17258,7 @@ const defaultInstance = 'cloud.testkube.io';
 const instanceAliases = {
     'api.testkube.io': 'cloud.testkube.io',
     'api.testkube.xyz': 'cloud.testkube.xyz',
+    'api.testkube.dev': 'cloud.testkube.dev',
 };
 const knownInstances = {
     'cloud.testkube.io': {
@@ -17269,6 +17270,11 @@ const knownInstances = {
         api: 'https://api.testkube.xyz',
         ws: 'wss://websockets.testkube.xyz',
         dashboard: 'https://cloud.testkube.xyz',
+    },
+    'cloud.testkube.dev': {
+        api: 'https://api.testkube.dev',
+        ws: 'wss://websockets.testkube.dev',
+        dashboard: 'https://cloud.testkube.dev',
     },
 };
 const knownSuffixes = ['', '/v1', '/results/v1'];
