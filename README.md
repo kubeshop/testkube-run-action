@@ -22,6 +22,10 @@
 
 <hr>
 
+# Notice!
+
+Please use new [Testkube GH action](https://github.com/marketplace/actions/install-testkube) to build your pipeline more efficiently.
+
 # Run tests with GitHub Actions
 
 "Run on Testkube" is a GitHub Action for running tests on the Testkube platform.
