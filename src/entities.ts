@@ -49,8 +49,9 @@ export class TestEntity implements Entity {
       let done = false;
 
       const getIsFinished = async () => {
-        const {executionResult: {status}} = await this.client.getTestExecutionDetails(id, true)
-          .catch(() => ({executionResult: {status: ExecutionStatus.queued}}));
+        const status = await this.client.getTestExecutionDetails(id, true)
+          .then(x => x.executionResult.status)
+          .catch(() => ExecutionStatus.queued);
         return [ExecutionStatus.passed, ExecutionStatus.failed, ExecutionStatus.cancelled, ExecutionStatus.aborted, ExecutionStatus.timeout].includes(status);
       };
 
