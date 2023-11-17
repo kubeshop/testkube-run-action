@@ -57,7 +57,7 @@ export async function resolveConfig(config: ActionInput): Promise<ConnectionConf
     if (baseUrl.endsWith('/results/v1')) {
       baseDashboardUrl = baseUrl.replace(/\/results\/v1$/, '');
     } else if (/^https?:\/\/api\.[^/]+$/.test(baseUrl)) {
-      baseDashboardUrl = baseUrl.replace('//api.', '//cloud.');
+      baseDashboardUrl = baseUrl.replace('//api.', '//app.');
     }
   }
 
