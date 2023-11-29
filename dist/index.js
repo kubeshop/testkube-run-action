@@ -17254,27 +17254,31 @@ var write = __nccwpck_require__(1262);
 // EXTERNAL MODULE: ./src/utils.ts
 var utils = __nccwpck_require__(1314);
 ;// CONCATENATED MODULE: ./src/config.ts
-const defaultInstance = 'cloud.testkube.io';
+const defaultInstance = 'app.testkube.io';
 const instanceAliases = {
-    'api.testkube.io': 'cloud.testkube.io',
-    'api.testkube.xyz': 'cloud.testkube.xyz',
-    'api.testkube.dev': 'cloud.testkube.dev',
+    'api.testkube.io': 'app.testkube.io',
+    'api.testkube.xyz': 'app.testkube.xyz',
+    'api.testkube.dev': 'app.testkube.dev',
+    // Backwards compatibility
+    'cloud.testkube.io': 'app.testkube.io',
+    'cloud.testkube.xyz': 'app.testkube.xyz',
+    'cloud.testkube.dev': 'app.testkube.dev',
 };
 const knownInstances = {
-    'cloud.testkube.io': {
+    'app.testkube.io': {
         api: 'https://api.testkube.io',
         ws: 'wss://websockets.testkube.io',
-        dashboard: 'https://cloud.testkube.io',
+        dashboard: 'https://app.testkube.io',
     },
-    'cloud.testkube.xyz': {
+    'app.testkube.xyz': {
         api: 'https://api.testkube.xyz',
         ws: 'wss://websockets.testkube.xyz',
-        dashboard: 'https://cloud.testkube.xyz',
+        dashboard: 'https://app.testkube.xyz',
     },
-    'cloud.testkube.dev': {
+    'app.testkube.dev': {
         api: 'https://api.testkube.dev',
         ws: 'wss://websockets.testkube.dev',
-        dashboard: 'https://cloud.testkube.dev',
+        dashboard: 'https://app.testkube.dev',
     },
 };
 const knownSuffixes = ['', '/v1', '/results/v1'];
@@ -17320,7 +17324,7 @@ async function resolveConfig(config) {
             baseDashboardUrl = baseUrl.replace(/\/results\/v1$/, '');
         }
         else if (/^https?:\/\/api\.[^/]+$/.test(baseUrl)) {
-            baseDashboardUrl = baseUrl.replace('//api.', '//cloud.');
+            baseDashboardUrl = baseUrl.replace('//api.', '//app.');
         }
     }
     if (cloud) {
@@ -17490,8 +17494,9 @@ class TestEntity {
             let timeoutRef;
             let done = false;
             const getIsFinished = async () => {
-                const { executionResult: { status } } = await this.client.getTestExecutionDetails(id, true)
-                    .catch(() => ({ executionResult: { status: _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.queued */ .F.queued } }));
+                const status = await this.client.getTestExecutionDetails(id, true)
+                    .then(x => x.executionResult.status)
+                    .catch(() => _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.queued */ .F.queued);
                 return [_types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.passed */ .F.passed, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.failed */ .F.failed, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.cancelled */ .F.cancelled, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.aborted */ .F.aborted, _types__WEBPACK_IMPORTED_MODULE_2__/* .ExecutionStatus.timeout */ .F.timeout].includes(status);
             };
             const finish = () => {

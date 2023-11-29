@@ -57,7 +57,7 @@ The most important options you will need are `test` and `testSuite` - you should
 
 ### Testkube Cloud
 
-To use this GitHub Action for the [**Testkube Cloud**](https://cloud.testkube.io), you need to [**create API token**](https://docs.testkube.io/testkube-cloud/organization-management#api-tokens).
+To use this GitHub Action for the [**Testkube Cloud**](https://app.testkube.io), you need to [**create API token**](https://docs.testkube.io/testkube-cloud/organization-management#api-tokens).
 
 Then, pass the `organization` and `environment` IDs for the test, along with the `token` and other parameters specific for your use case:
 
