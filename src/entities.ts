@@ -74,8 +74,10 @@ export class TestEntity implements Entity {
           if (done || (await getIsFinished())) {
             finish();
           } else {
-            conn = buildWebSocket();
-            write.log(kleur.italic('Connection lost, reconnecting...'));
+            setTimeout(() => {
+              conn = buildWebSocket();
+              write.log(kleur.italic('Connection lost, reconnecting...'));
+            }, 5000);
           }
         });
 
