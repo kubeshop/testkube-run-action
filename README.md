@@ -25,7 +25,7 @@
 # Notice!
 
 This action has been deprecated and will not receive more updates.
-Please use the new [Testkube GH action](https://github.com/marketplace/actions/install-testkube) to build your pipeline more efficiently.
+Please use the new [Testkube Action](https://github.com/marketplace/actions/testkube-action) to build your pipeline more efficiently.
 Learn more about it [in our docs](https://docs.testkube.io/articles/github-actions).
 
 
